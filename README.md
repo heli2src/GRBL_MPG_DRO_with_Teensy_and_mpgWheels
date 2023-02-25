@@ -11,3 +11,5 @@ Features:
 - MPG wheels connected via rs485
     
 Source code not ready yet, there are some bugs, use it carfully!
+<br><br><br>
+<img src="docs/images/dev_1.jpg"></img>
