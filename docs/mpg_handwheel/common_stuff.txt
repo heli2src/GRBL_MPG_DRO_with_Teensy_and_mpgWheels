@@ -1,0 +1,131 @@
+MicroPython v1.19.1 on 2022-10-04; Raspberry Pi Pico with RP2040
+
+
+https://pypi.org/project/micropython-modbus/
+	https://github.com/brainelectronics/micropython-modbus
+
+
+modbus:
+	Start 3,5Zeichen warten bzw. ab 19200Baud = 1.75ms   1 Zeichen = 11 Bit
+	Adresse 1 Byte
+	Funktion 1 Byte	 
+	Daten   n Byte
+	CR-Check 2 Byte
+	Ende	 3.5Zeichen warten
+		
+	Ungültig, sendeunterbrechung von mehr al 1,5 Zeichen
+	
+
+
+   für C-Code: https://github.com/alejoseb/Modbus-PI-Pico-FreeRTOS
+
+
+Beispiele:
+	https://github.com/raspberrypi/pico-micropython-examples
+
+
+RS485:
+	DI	-> TX
+	DE	-> TX enable
+	RE	-> RX enable
+	RO	-> RX
+
+	(03 03 0002 0001 2428)              ==> server.mb.read_register(2)
+	(03 10 0002 0002 04 4120 0000 6C38) ==> server.mb.write_float(2, 10.0)   
+	(03 10 0002 0002 04 0000 0058 7834) ==> server.mb.write_long(2, ord('X'))
+
+3,adr= 2, dat=X	(03 10 0002 0001 02 0058 BF28)     ==> minimalmodbus.write_register(2, 0xfb)
+    03: The Slave Address (03 hex = address 03)
+    10: The Function Code 16 (Write Multiple Holding Registers, 16 = 10 hex)
+    0002: The Data Address of the first register (0002 hex = 18, +40001 offset = register #40003).
+    0001: The number of registers to write.
+    02: The number of data bytes to follow (1 registers x 2 bytes each = 2 bytes).
+    0058A: The value to write to register 40002
+    BF28: The CRC (Cyclic Redundancy Check) for error checking.
+
+
+ 
+
+
+
+
+https://ozeki.hu/p_5881-mobdbus-function-code-6-write-single-holding-register.html :
+
+Test query = {0x01, 0x03, 0x0F, 0x48, 0x00, 0x02, 0x47, 0x09};  = 8 Bytes
+0x01 - Slave ID
+0x03 - Function code
+     Read:
+    01: Coils (FC=01)
+    02: Discrete Inputs (FC=02)
+    03: Multiple Holding Registers (FC=03)
+    04: Input Registers (FC=04)
+
+    Write:
+    05: Single Coil (FC=05)
+    06: Single Holding Register (FC=06)			<---- den brauche ich 
+		Function code	1 Byte	0x06
+		Register Address	2 Bytes	0x0000 to 0xFFFF
+		Register Value	2 Bytes	0x0000 to 0xFFFF
+
+		Response:
+		The normal response is an echo of the request, returned after the register contents have been written.
+		Function code	1 Byte	0x06
+		Register Address	2 Bytes	0x0000 to 0xFFFF
+		Register Value	2 Bytes	0x0000 to 0xFFFF
+
+		Error
+		Error code	1 Byte	0x86
+		Exception code	1 Byte	01 or 02 or 03 or 04
+
+    0F: Multiple Coils (FC=15)
+    10: Multiple Holding Registers (FC=16)							==> minimalmodbus.write_register(2, 0xfb)
+		Function code		1 Byte	0x10
+		Starting Address		2 Bytes	0x0000 to 0xFFFF
+		Quantity of Registers	2 Bytes	0x0001 to 0x007B
+		Byte Count	1 Byte	2 x N*
+		Registers Value		N* x 2 Bytes	value
+
+0x0F - Starting Address High
+0x48 - Starting address Low
+0x00 - Quantity of registers High
+0x02 - Quantity of registers Low
+0x47 - CRC High (Calculated)
+0x09 - CRC Low (Calculated)
+
+The following data is received from the slave. If the calculated checksum matches with the CRC from the received buffer, the data is stored in RESULT(a variable).
+Response: RESULT - {0x01, 0x03, 0x04, 0x77, 0xAB, 0x23, 0xB8, 0x89, 0x25}
+0x01 - Slave ID
+0x03 - Function code
+0x04 - No. of bytes of response
+0x77, 0xAB, 0x23, 0xB8 - Data sent by the slave
+0x89, 0x25 - Received checksum
+
+1 Start, 8bit, 1parität, 1stop
+
+
+
+__________________________________
+example:  https://ozeki.hu/p_5883-mobdbus-function-code-16-write-multiple-holding-registers.html
+ This command is writing the contents of two analog output holding registers # 40019 & 40020 to the slave device with address 11.
+ Each holding register can store 16 bits.
+ 0B 10 0012 0002 04 0B0A C102 A0D5
+
+    0B: The Slave Address (0B hex = address 11)
+    10: The Function Code 16 (Write Multiple Holding Registers, 16 = 10 hex)
+    0012: The Data Address of the first register (0012 hex = 18, +40001 offset = register #40019).
+    0002: The number of registers to write.
+    04: The number of data bytes to follow (2 registers x 2 bytes each = 4 bytes).
+    0B0A: The value to write to register 40019
+    C102: The value to write to register 40020
+    A0D5: The CRC (Cyclic Redundancy Check) for error checking.
+
+Response
+0B 10 0012 0002 E167
+
+    0B: The Slave Address (0B hex = address 11)
+    10: The Function Code 16 (Write Multiple Holding Registers, 10 hex - 16)
+    0012: The Data Address of the first register (# 40019 - 40001 = 18 (0012 hex) ).
+    0002: The number of registers written.
+    E167: The CRC (Cyclic Redundancy Check) for error checking.
+
+
