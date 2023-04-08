@@ -882,7 +882,7 @@ void processJoystick (int MPGkey) {
         mystate.MPGkey = MPGkey;
 }
 
-void processMpg (char MPGkey, int MPGcnt) {
+void processMpg (char MPGkey, int MPGcnt, int MPGswitch) {
   // translate the values from MPG-handwheel to drive commands
   // is called when you operate the hand wheel
   // MPGkey = X,Y,Z
@@ -896,10 +896,15 @@ void processMpg (char MPGkey, int MPGcnt) {
         unsigned long time = millis();
         unsigned long dtime = time-mystate.mpgtime[index];
         mystate.mpgtime[index] = time;   
-        // speed = 60*1000 MPGcnt *0.01 / (millis() - oldmillis)  				= mm/min
-        speed = 600.0 * float(abs(MPGcnt)) / float(dtime);
-        if (speed < 1.00)
+        // 
+        if (MPGswitch == 0) {
+          speed = 600.0 * float(abs(MPGcnt)) / float(dtime);        // 60*1000 MPGcnt *0.01 / (millis() - oldmillis)  				= mm/min
+          if (speed < 1.00)
             speed = 1.00;
+        }else if (MPGswitch == 1) 
+          speed = target.fz*10;
+        else
+          speed = target.fz*100;
  
  /*       if ((millis()-mystate.buttontime)> 2*mystate.buttonDtime){
             target.fzOld = target.fz;

@@ -1,28 +1,30 @@
 /*
- *   Software for Teensy 3.2 (mit MK20DX256VLH7, 3,3V)
+ *   Software for Teensy 3.2 (with MK20DX256VLH7, 3,3V)
  *   
  *   used libs:
  *    - https://github.com/KrisKasprzak/ILI9341_t3_controls
  *    - https://github.com/KrisKasprzak/ILI9341_t3_Menu
  * 
  *  free Pins:
- *  - 3-6, 16-23
+ *  - 4-6, 16-23
  *  used Pins:
  *  - Buttons left  ->  Pin 14
  *            right ->  Pin 15
  *                  ->  Pin 16 
  *            
  *  - Uart
+ +       for communication with the grblHAL:
  *            RX1 ->   Pin 0   weiss
  *            TX1 ->   Pin 1   rot
+ *       rs485-Bus for communication with the mpg wheels and ext. switches:     main_loop call MPGPollSerial every 20ms
  *            RX3 ->   Pin 7   to rs485     (red)
  *            TX3 ->   Pin 8   to rs485     (white)
  *            
- *  - switch
- *                      ->  Pin 16 (A2)     Analog Input used for joystick ....
+ *  - switch   
+ *                      ->  Pin 16 (A2)     Analog Input used for joystick ....      -> not used 
  *
  *  - mydiplay   2,8" Display        
- *         ILI9341      -> Teensy:
+ *        ILI9341      -> Teensy:
  *            VCC       -> Pin VIN 1     5V/3.3V power input
  *            2         -> Pin GND       Ground
  *            3         -> Pin 10        CS  LCD chip select signal, low level enable
@@ -48,6 +50,7 @@
  *      - tastendruck hält alles an :-(   -> umbauen auf millis
 
         - mpg stop abfragen und auswerten !!
+        -  mpg slave id must be changed for each achse
         - start.taste am Display geht nicht mehr??
         - speed von mpg bei x10, x100 über Fz, Fx einstellungen
  *
@@ -90,22 +93,26 @@ void setup()
    MPG_init();
 } 
 
-bool tim20=false; 
+bool tim50=false; 
+bool tim20=false;
 void loop() 
 {   
     char buffer [60];
     String sbuffer;
     unsigned long mylooptime = millis();
-    //const char *data
 
-    if (mylooptime % 20 == 0 && tim20) {    //call every 20ms
+    if (mylooptime % 20 == 0 && tim20) {    //call every 20ms   
+        MPGPollSerial();                    //defined in handwheel.ino
+        tim20 = false;        
+    }else if (mylooptime % 20 != 0)
+        tim20 = true;
+
+    if (mylooptime % 50 == 0 && tim50) {    //call every 50ms
         MyDisplay_loop();
         Switch_loop();
-        tim20 = false;      
-        MPGPollSerial();
-    }else if (mylooptime % 20 != 0){
-        tim20 = true;
-    }
+        tim50 = false;      
+    }else if (mylooptime % 50 != 0)
+        tim50 = true;
     DROProcessEvents();
     grblPollSerial();
 

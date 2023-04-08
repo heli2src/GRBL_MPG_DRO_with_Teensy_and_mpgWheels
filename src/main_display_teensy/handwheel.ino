@@ -4,12 +4,17 @@
 // https://www.pjrc.com/teensy/td_uart.html
 
 
-byte readMpg[] = { 0x03, 0x03, 0x00, 0x00, 0x00, 0x01, 0x85, 0xE8};
+byte readMpg[] = { 0x03, 0x03, 0x00, 0x00, 0x00, 0x02};      //, 0x85, 0xE8};       // Modbus protocoll
+//                  |slave ID, must be changed for each achse
+//                        |---0x03 = function code:  read Multiple Holding Registers (16-bit)
+//                               | Start Adress msb/lsb
+//                                          | Quantity of registers msb/lsb
+//                                                                | CRC msb/lsb
 unsigned long timeout = 6;
 
 void MPG_init(void) {
 //RS485SERIAL.setTX(8);
-//RS485SERIAL.setRX(9);
+//RS485SERIAL.setRX(7);
 RS485SERIAL.begin(38400);     //modubus rs485
 
 // addMemoryForRead( buffer, size);
@@ -28,6 +33,9 @@ void MPGPollSerial(void){
     if (RS485SERIAL.availableForWrite()) {
       for(unsigned int i = 0; i<sizeof(readMpg); i++)
           RS485SERIAL.write(readMpg[i]);
+      uint crc = _calculate_crc_string(readMpg, 6);       
+      RS485SERIAL.write(crc & 0x00FF);          // lsb
+      RS485SERIAL.write((crc & 0xFF00) >>8);    // msb    
     }
     if (RS485SERIAL.available()){
       mpg_data.counter = 0;      
@@ -37,15 +45,18 @@ void MPGPollSerial(void){
           mpg_data.block[mpg_data.counter++] = c;    
       }
       mpg_data.latest_read_time = millis();
-      if (mpg_data.counter == 7 &&  mpg_data.block[0] == readMpg[0] && mpg_data.block[1] == readMpg[1] && mpg_data.block[2] == 2) {
+      if (mpg_data.counter == 9 &&  mpg_data.block[0] == readMpg[0] && mpg_data.block[1] == readMpg[1] && mpg_data.block[2] == 4) {
           uint result = _calculate_crc_string(mpg_data.block, mpg_data.counter);
           if (result == 0){    
              int mpg = int(mpg_data.block[3] << 8) + int(mpg_data.block[4]);
+             int modeswitch = int(mpg_data.block[5] << 8) + int(mpg_data.block[6]);             
              if (mpg > 32768) mpg= mpg-65536;
-             if (mpg != mpg_data.x) {
-               DROmpgEvent(true, 'Z', mpg-mpg_data.x);          
-               mpg_data.x = mpg;
-             }               
+             if (mpg != mpg_data.z) {
+               DROmpgEvent(true, 'Z', mpg-mpg_data.z, modeswitch);          
+               mpg_data.z = mpg;
+             }        
+          }else{
+            DEBUG("MPGPollSerial crc error");
           }
       }
     }else if (mpg_data.latest_read_time-millis() > timeout) {

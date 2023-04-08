@@ -210,7 +210,7 @@ void drawString(uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint1
 void set_grblstate(int value, const char* string, uint16_t color, int alarm, int error);
 void processKeypress(int DROkey, int keydown, float rpm);
 void processJoystick(int MPGkey);
-void processMpg (char MPGkey, int MPGcnt);
+void processMpg (char MPGkey, int MPGcnt, int MPGswitch);
 
 
 // Label *UILibLabelCreate(Widget *parent, ILI9341_t3_font_t *font, uint16_t fgColor, uint16_t x, uint16_t y, uint16_t width, void (*eventHandler)(Widget *self, Event *event));
