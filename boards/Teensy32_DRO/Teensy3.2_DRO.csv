@@ -1,0 +1,4 @@
+"#","Reference","Qty","Value","Footprint","DNP"
+"1","U1","1","Teensy3.2","teensy:Teensy30_31_32_LC",""
+"2","U2","1","Driver_Display_Ili9341TFT","Display:CR2013-MI2120",""
+"3","U3","1","RS485_2_TTL_UART","Heli2:RS485_2_TTL_UART",""

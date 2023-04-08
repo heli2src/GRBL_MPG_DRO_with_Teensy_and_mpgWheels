@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<export version="E">
+  <design>
+    <source>C:\Users\49163\Documents\Projecte\Cnc-Fraese\CNC-Drehmaschine\Elektronik\GRBL_MPG_DRO_with_Teensy_and_mpgWheels\boards\Teensy3.2_DRO\Teensy3.2_DRO.kicad_sch</source>
+    <date>28.02.2023 22:51:02</date>
+    <tool>Eeschema (7.0.0)</tool>
+    <sheet number="1" name="/" tstamps="/">
+      <title_block>
+        <title/>
+        <company/>
+        <rev/>
+        <date/>
+        <source>Teensy3.2_DRO.kicad_sch</source>
+        <comment number="1" value=""/>
+        <comment number="2" value=""/>
+        <comment number="3" value=""/>
+        <comment number="4" value=""/>
+        <comment number="5" value=""/>
+        <comment number="6" value=""/>
+        <comment number="7" value=""/>
+        <comment number="8" value=""/>
+        <comment number="9" value=""/>
+      </title_block>
+    </sheet>
+  </design>
+  <components>
+    <comp ref="U1">
+      <value>Teensy3.2</value>
+      <footprint>teensy:Teensy30_31_32_LC</footprint>
+      <libsource lib="Lathe-rescue" part="Teensy3.2-teensy" description=""/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="Teensy3.2_DRO.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>00000000-0000-0000-0000-00005d715ad8</tstamps>
+    </comp>
+    <comp ref="U2">
+      <value>Driver_Display_Ili9341TFT</value>
+      <footprint>Display:CR2013-MI2120</footprint>
+      <libsource lib="ili9341tft-driver_display" part="Ili9341TFT-Driver_Display" description=""/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="Teensy3.2_DRO.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>28be8adf-4792-4b75-9ee2-ca89d29e65be</tstamps>
+    </comp>
+    <comp ref="U3">
+      <value>RS485_2_TTL_UART</value>
+      <footprint>Heli2:RS485_2_TTL_UART</footprint>
+      <datasheet>C:\Users\49163\Documents\KiCad\7.0\manuals\RS485_To_TTL_UART.pdf</datasheet>
+      <libsource lib="Heli2" part="RS485_2_TTL_UART" description=""/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="Teensy3.2_DRO.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>583cd341-1f22-43d8-bedd-e3709708bbe5</tstamps>
+    </comp>
+  </components>
+  <libparts>
+    <libpart lib="Heli2" part="RS485_2_TTL_UART">
+      <docs>C:\Users\49163\Documents\KiCad\7.0\manuals\RS485_To_TTL_UART.pdf</docs>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">RS485_2_TTL_UART</field>
+        <field name="Datasheet">C:\Users\49163\Documents\KiCad\7.0\manuals\RS485_To_TTL_UART.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="VCC" type="input"/>
+        <pin num="2" name="TXD" type="input"/>
+        <pin num="3" name="RXD" type="output"/>
+        <pin num="4" name="GND" type="input"/>
+        <pin num="5" name="A+" type="bidirectional"/>
+        <pin num="6" name="B-" type="bidirectional"/>
+        <pin num="7" name="Y" type="bidirectional"/>
+      </pins>
+    </libpart>
+    <libpart lib="Lathe-rescue" part="Teensy3.2-teensy">
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">teensy_Teensy3.2</field>
+      </fields>
+      <pins>
+        <pin num="1" name="GND" type="power_in"/>
+        <pin num="2" name="0_RX1_Touch" type="bidirectional"/>
+        <pin num="3" name="1_TX1_Touch" type="bidirectional"/>
+        <pin num="4" name="2" type="bidirectional"/>
+        <pin num="5" name="3_TX_PWM" type="bidirectional"/>
+        <pin num="6" name="4_RX_PWM" type="bidirectional"/>
+        <pin num="7" name="5_TX1_PWM" type="bidirectional"/>
+        <pin num="8" name="6_PWM" type="bidirectional"/>
+        <pin num="9" name="7_RX3_DOUT" type="bidirectional"/>
+        <pin num="10" name="8_TX3_DIN" type="bidirectional"/>
+        <pin num="11" name="9_RX2_CS_PWM" type="bidirectional"/>
+        <pin num="12" name="10_TX2_CS_PWM" type="bidirectional"/>
+        <pin num="13" name="11_DOUT" type="bidirectional"/>
+        <pin num="14" name="12_DIN" type="bidirectional"/>
+        <pin num="15" name="VBat" type="power_in"/>
+        <pin num="16" name="3.3V" type="power_out"/>
+        <pin num="17" name="GND" type="power_in"/>
+        <pin num="18" name="Program" type="input"/>
+        <pin num="19" name="A14/DAC" type="bidirectional"/>
+        <pin num="20" name="13_LED_SCK" type="bidirectional"/>
+        <pin num="21" name="14_A0_SCK" type="bidirectional"/>
+        <pin num="22" name="15_A1_CS_Touch" type="bidirectional"/>
+        <pin num="23" name="16_A2_SCL0_Touch" type="bidirectional"/>
+        <pin num="24" name="17_A3_SDA0_Touch" type="bidirectional"/>
+        <pin num="25" name="18_A4_SDA0_Touch" type="bidirectional"/>
+        <pin num="26" name="19_A5_SCL0_Touch" type="bidirectional"/>
+        <pin num="27" name="20_A6_CS_PWM" type="bidirectional"/>
+        <pin num="28" name="21_A7_RX1_CS_PWM" type="bidirectional"/>
+        <pin num="29" name="22_A8_Touch_PWM" type="bidirectional"/>
+        <pin num="30" name="23_A9_Touch_PWM" type="bidirectional"/>
+        <pin num="31" name="3.3V" type="power_out"/>
+        <pin num="32" name="AGND" type="power_out"/>
+        <pin num="33" name="Vin" type="power_in"/>
+        <pin num="34" name="VUSB" type="power_in"/>
+        <pin num="35" name="AREF" type="input"/>
+        <pin num="36" name="A10" type="bidirectional"/>
+        <pin num="37" name="A11" type="bidirectional"/>
+        <pin num="~" name="24" type="bidirectional"/>
+      </pins>
+    </libpart>
+    <libpart lib="ili9341tft-driver_display" part="Ili9341TFT-Driver_Display">
+      <footprints>
+        <fp>*CR2013*MI2120*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">Driver_Display_Ili9341TFT</field>
+        <field name="Footprint">Display:CR2013-MI2120</field>
+      </fields>
+      <pins>
+        <pin num="1" name="VCC" type="power_in"/>
+        <pin num="2" name="GND" type="power_in"/>
+        <pin num="3" name="~{CS}" type="input"/>
+        <pin num="4" name="RESET" type="input"/>
+        <pin num="5" name="D/~{C}" type="input"/>
+        <pin num="6" name="MOSI" type="input"/>
+        <pin num="7" name="SCK" type="input"/>
+        <pin num="8" name="LED" type="input"/>
+        <pin num="9" name="MISO" type="output"/>
+        <pin num="10" name="T_CLK" type="input"/>
+        <pin num="11" name="T_CS" type="input"/>
+        <pin num="12" name="T_DIN" type="output"/>
+        <pin num="13" name="T_DO" type="input"/>
+        <pin num="14" name="T_IRQ" type="input"/>
+      </pins>
+    </libpart>
+  </libparts>
+  <libraries>
+    <library logical="Heli2">
+      <uri>C:/Users/49163/Documents/KiCad/7.0/symbols/Heli2.kicad_sym</uri>
+    </library>
+    <library logical="Lathe-rescue">
+      <uri>C:\Users\49163\Documents\Projecte\Cnc-Fraese\CNC-Drehmaschine\Elektronik\GRBL_MPG_DRO_with_Teensy_and_mpgWheels\boards\Teensy3.2_DRO/Lathe-rescue.kicad_sym</uri>
+    </library>
+    <library logical="ili9341tft-driver_display">
+      <uri>C:/Users/49163/Documents/KiCad/7.0/symbols/ili9341tft-driver_display.kicad_sym</uri>
+    </library>
+  </libraries>
+  <nets>
+    <net code="1" name="GND">
+      <node ref="U1" pin="1" pinfunction="GND" pintype="power_in"/>
+      <node ref="U2" pin="2" pinfunction="GND" pintype="power_in"/>
+      <node ref="U3" pin="4" pinfunction="GND" pintype="input"/>
+    </net>
+    <net code="2" name="Net-(U1-3_TX_PWM)">
+      <node ref="U1" pin="5" pinfunction="3_TX_PWM" pintype="bidirectional"/>
+      <node ref="U2" pin="11" pinfunction="T_CS" pintype="input"/>
+    </net>
+    <net code="3" name="Net-(U1-7_RX3_DOUT)">
+      <node ref="U1" pin="9" pinfunction="7_RX3_DOUT" pintype="bidirectional"/>
+      <node ref="U3" pin="3" pinfunction="RXD" pintype="output"/>
+    </net>
+    <net code="4" name="Net-(U1-8_TX3_DIN)">
+      <node ref="U1" pin="10" pinfunction="8_TX3_DIN" pintype="bidirectional"/>
+      <node ref="U3" pin="2" pinfunction="TXD" pintype="input"/>
+    </net>
+    <net code="5" name="Net-(U1-9_RX2_CS_PWM)">
+      <node ref="U1" pin="11" pinfunction="9_RX2_CS_PWM" pintype="bidirectional"/>
+      <node ref="U2" pin="5" pinfunction="D/~{C}" pintype="input"/>
+    </net>
+    <net code="6" name="Net-(U1-10_TX2_CS_PWM)">
+      <node ref="U1" pin="12" pinfunction="10_TX2_CS_PWM" pintype="bidirectional"/>
+      <node ref="U2" pin="3" pinfunction="~{CS}" pintype="input"/>
+    </net>
+    <net code="7" name="Net-(U1-11_DOUT)">
+      <node ref="U1" pin="13" pinfunction="11_DOUT" pintype="bidirectional"/>
+      <node ref="U2" pin="12" pinfunction="T_DIN" pintype="output"/>
+      <node ref="U2" pin="6" pinfunction="MOSI" pintype="input"/>
+    </net>
+    <net code="8" name="Net-(U1-Vin)">
+      <node ref="U1" pin="33" pinfunction="Vin" pintype="power_in"/>
+      <node ref="U2" pin="1" pinfunction="VCC" pintype="power_in"/>
+      <node ref="U3" pin="1" pinfunction="VCC" pintype="input"/>
+    </net>
+    <net code="9" name="Net-(U2-LED)">
+      <node ref="U1" pin="16" pinfunction="3.3V" pintype="power_out"/>
+      <node ref="U2" pin="4" pinfunction="RESET" pintype="input"/>
+      <node ref="U2" pin="8" pinfunction="LED" pintype="input"/>
+    </net>
+    <net code="10" name="unconnected-(U1-0_RX1_Touch-Pad2)">
+      <node ref="U1" pin="2" pinfunction="0_RX1_Touch" pintype="bidirectional"/>
+    </net>
+    <net code="11" name="unconnected-(U1-1_TX1_Touch-Pad3)">
+      <node ref="U1" pin="3" pinfunction="1_TX1_Touch" pintype="bidirectional"/>
+    </net>
+    <net code="12" name="unconnected-(U1-2-Pad4)">
+      <node ref="U1" pin="4" pinfunction="2" pintype="bidirectional+no_connect"/>
+      <node ref="U2" pin="14" pinfunction="T_IRQ" pintype="input+no_connect"/>
+    </net>
+    <net code="13" name="unconnected-(U1-3.3V-Pad31)">
+      <node ref="U1" pin="31" pinfunction="3.3V" pintype="power_out+no_connect"/>
+    </net>
+    <net code="14" name="unconnected-(U1-3.3V-Pad~)">
+      <node ref="U1" pin="" pinfunction="3.3V" pintype="power_out+no_connect"/>
+    </net>
+    <net code="15" name="unconnected-(U1-4_RX_PWM-Pad6)">
+      <node ref="U1" pin="6" pinfunction="4_RX_PWM" pintype="bidirectional"/>
+    </net>
+    <net code="16" name="unconnected-(U1-5_TX1_PWM-Pad7)">
+      <node ref="U1" pin="7" pinfunction="5_TX1_PWM" pintype="bidirectional"/>
+    </net>
+    <net code="17" name="unconnected-(U1-6_PWM-Pad8)">
+      <node ref="U1" pin="8" pinfunction="6_PWM" pintype="bidirectional"/>
+    </net>
+    <net code="18" name="unconnected-(U1-12_DIN-Pad14)">
+      <node ref="U1" pin="14" pinfunction="12_DIN" pintype="bidirectional+no_connect"/>
+      <node ref="U2" pin="13" pinfunction="T_DO" pintype="input+no_connect"/>
+      <node ref="U2" pin="9" pinfunction="MISO" pintype="output+no_connect"/>
+    </net>
+    <net code="19" name="unconnected-(U1-13_LED_SCK-Pad20)">
+      <node ref="U1" pin="20" pinfunction="13_LED_SCK" pintype="bidirectional+no_connect"/>
+      <node ref="U2" pin="10" pinfunction="T_CLK" pintype="input+no_connect"/>
+      <node ref="U2" pin="7" pinfunction="SCK" pintype="input+no_connect"/>
+    </net>
+    <net code="20" name="unconnected-(U1-14_A0_SCK-Pad21)">
+      <node ref="U1" pin="21" pinfunction="14_A0_SCK" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="21" name="unconnected-(U1-15_A1_CS_Touch-Pad22)">
+      <node ref="U1" pin="22" pinfunction="15_A1_CS_Touch" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="22" name="unconnected-(U1-16_A2_SCL0_Touch-Pad23)">
+      <node ref="U1" pin="23" pinfunction="16_A2_SCL0_Touch" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="23" name="unconnected-(U1-17_A3_SDA0_Touch-Pad24)">
+      <node ref="U1" pin="24" pinfunction="17_A3_SDA0_Touch" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="24" name="unconnected-(U1-18_A4_SDA0_Touch-Pad25)">
+      <node ref="U1" pin="25" pinfunction="18_A4_SDA0_Touch" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="25" name="unconnected-(U1-19_A5_SCL0_Touch-Pad26)">
+      <node ref="U1" pin="26" pinfunction="19_A5_SCL0_Touch" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="26" name="unconnected-(U1-20_A6_CS_PWM-Pad27)">
+      <node ref="U1" pin="27" pinfunction="20_A6_CS_PWM" pintype="bidirectional"/>
+    </net>
+    <net code="27" name="unconnected-(U1-21_A7_RX1_CS_PWM-Pad28)">
+      <node ref="U1" pin="28" pinfunction="21_A7_RX1_CS_PWM" pintype="bidirectional"/>
+    </net>
+    <net code="28" name="unconnected-(U1-22_A8_Touch_PWM-Pad29)">
+      <node ref="U1" pin="29" pinfunction="22_A8_Touch_PWM" pintype="bidirectional"/>
+    </net>
+    <net code="29" name="unconnected-(U1-23_A9_Touch_PWM-Pad30)">
+      <node ref="U1" pin="30" pinfunction="23_A9_Touch_PWM" pintype="bidirectional"/>
+    </net>
+    <net code="30" name="unconnected-(U1-24-Pad~)">
+      <node ref="U1" pin="" pinfunction="24" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="31" name="unconnected-(U1-25_Touch_PWM-Pad~)">
+      <node ref="U1" pin="" pinfunction="25_Touch_PWM" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="32" name="unconnected-(U1-26_A15_RX2-Pad~)">
+      <node ref="U1" pin="" pinfunction="26_A15_RX2" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="33" name="unconnected-(U1-27_A16-Pad~)">
+      <node ref="U1" pin="" pinfunction="27_A16" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="34" name="unconnected-(U1-28_A17-Pad~)">
+      <node ref="U1" pin="" pinfunction="28_A17" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="35" name="unconnected-(U1-29_A18_SCL1-Pad~)">
+      <node ref="U1" pin="" pinfunction="29_A18_SCL1" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="36" name="unconnected-(U1-30_A19_SDA1-Pad~)">
+      <node ref="U1" pin="" pinfunction="30_A19_SDA1" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="37" name="unconnected-(U1-31_A20_TX2-Pad~)">
+      <node ref="U1" pin="" pinfunction="31_A20_TX2" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="38" name="unconnected-(U1-32_Touch_PWM-Pad~)">
+      <node ref="U1" pin="" pinfunction="32_Touch_PWM" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="39" name="unconnected-(U1-33_Touch-Pad~)">
+      <node ref="U1" pin="" pinfunction="33_Touch" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="40" name="unconnected-(U1-A10-Pad36)">
+      <node ref="U1" pin="36" pinfunction="A10" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="41" name="unconnected-(U1-A11-Pad37)">
+      <node ref="U1" pin="37" pinfunction="A11" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="42" name="unconnected-(U1-A12-Pad~)">
+      <node ref="U1" pin="" pinfunction="A12" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="43" name="unconnected-(U1-A13-Pad~)">
+      <node ref="U1" pin="" pinfunction="A13" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="44" name="unconnected-(U1-A14{slash}DAC-Pad19)">
+      <node ref="U1" pin="19" pinfunction="A14/DAC" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="45" name="unconnected-(U1-AGND-Pad32)">
+      <node ref="U1" pin="32" pinfunction="AGND" pintype="power_out+no_connect"/>
+    </net>
+    <net code="46" name="unconnected-(U1-AREF-Pad35)">
+      <node ref="U1" pin="35" pinfunction="AREF" pintype="input+no_connect"/>
+    </net>
+    <net code="47" name="unconnected-(U1-D+-Pad~)">
+      <node ref="U1" pin="" pinfunction="D+" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="48" name="unconnected-(U1-D--Pad~)">
+      <node ref="U1" pin="" pinfunction="D-" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="49" name="unconnected-(U1-GND-Pad17)">
+      <node ref="U1" pin="17" pinfunction="GND" pintype="power_in+no_connect"/>
+    </net>
+    <net code="50" name="unconnected-(U1-GND-Pad~)">
+      <node ref="U1" pin="" pinfunction="GND" pintype="power_in+no_connect"/>
+    </net>
+    <net code="51" name="unconnected-(U1-Program-Pad18)">
+      <node ref="U1" pin="18" pinfunction="Program" pintype="input+no_connect"/>
+    </net>
+    <net code="52" name="unconnected-(U1-Reset-Pad~)">
+      <node ref="U1" pin="" pinfunction="Reset" pintype="input+no_connect"/>
+    </net>
+    <net code="53" name="unconnected-(U1-VBat-Pad15)">
+      <node ref="U1" pin="15" pinfunction="VBat" pintype="power_in+no_connect"/>
+    </net>
+    <net code="54" name="unconnected-(U1-VUSB-Pad34)">
+      <node ref="U1" pin="34" pinfunction="VUSB" pintype="power_in+no_connect"/>
+    </net>
+    <net code="55" name="unconnected-(U3-A+-Pad5)">
+      <node ref="U3" pin="5" pinfunction="A+" pintype="bidirectional"/>
+    </net>
+    <net code="56" name="unconnected-(U3-B--Pad6)">
+      <node ref="U3" pin="6" pinfunction="B-" pintype="bidirectional"/>
+    </net>
+    <net code="57" name="unconnected-(U3-Y-Pad7)">
+      <node ref="U3" pin="7" pinfunction="Y" pintype="bidirectional"/>
+    </net>
+  </nets>
+</export>

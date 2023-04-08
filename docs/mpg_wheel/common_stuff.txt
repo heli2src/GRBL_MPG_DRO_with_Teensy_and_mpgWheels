@@ -4,6 +4,14 @@ MicroPython v1.19.1 on 2022-10-04; Raspberry Pi Pico with RP2040
 https://pypi.org/project/micropython-modbus/
 	https://github.com/brainelectronics/micropython-modbus
 
+Stecker RJ12
+	Pin 1 - Vdd  (5V)
+	Pin 2 - A    (next)
+	Pin 3 - A
+	Pin 4	- B
+	Pin 5 - B    (next)
+	Pin 6 - Masse
+
 
 modbus:
 	Start 3,5Zeichen warten bzw. ab 19200Baud = 1.75ms   1 Zeichen = 11 Bit
