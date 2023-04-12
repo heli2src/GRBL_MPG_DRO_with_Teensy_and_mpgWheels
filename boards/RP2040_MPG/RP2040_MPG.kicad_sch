@@ -1015,6 +1015,12 @@
     (uuid ff2badfa-c0f8-47c2-b2e1-9772507cc6be)
   )
 
+  (text "MPG wheel with RS485 and a OLED-display SSD1306.\n\n(c) Heli², Christian Jung"
+    (at 191.77 175.26 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid d7c24b26-5696-4da3-a17e-b1f2378db30c)
+  )
+
   (symbol (lib_id "oled_lcd_tft_displays:SSD1306") (at 83.82 71.12 270) (mirror x) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 023e56e9-42c7-4ec4-99ed-927038b81007)
