@@ -132,7 +132,7 @@ dmypy.json
 *~
 boards/RP2040_MPG/RP2040_MPG-backups/
 boards/RP2040_MPG/Gerber/
-
+boards/RP2040_MPG/fp-info-cache
 
 # ignore auto generated files
 
