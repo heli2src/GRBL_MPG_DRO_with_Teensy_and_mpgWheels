@@ -114,25 +114,26 @@ class PCmodbusServer(object):
 if __name__ == '__main__':
     # root = tk.Tk()
     # server=modbusserver(root,tk)
-    server = PCmodbusServer('COM5,3')
-    #server.mb.debug = True
+    server = PCmodbusServer('COM16,3')
+    # server.mb.debug = True
  #   server.write('axis', ord('X'))
-    oldcnt = 0
+    oldcnt = -1
+    result = None
     while True:
         for i in range(0, 1):
             try:
-                result = server.mb.read_register(i)
-                result = server.twos_comp(result, 16)
+                readvalue = server.mb.read_register(i)
+                result = server.twos_comp(readvalue, 16)
             except Exception:
                 # print('read error')
-                result = None
+                pass
             if i == 0:
                 cnt = result
             else:
                 diff = result
             sleep(0.05)
         if oldcnt != cnt:
-            print(cnt)  # , diff)
+            print(f'cnt={cnt}')  # , diff)
             oldcnt = cnt
 
 # 'read_bit', 'read_bits', 'read_float', 'read_long', 
