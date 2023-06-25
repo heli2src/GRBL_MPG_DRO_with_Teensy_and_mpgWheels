@@ -33,7 +33,12 @@ class SSD1306(framebuf.FrameBuffer):
         self.pages = self.height // 8
         self.buffer = bytearray(self.pages * self.width)
         super().__init__(self.buffer, self.width, self.height, framebuf.MONO_VLSB)
-        self.init_display()
+        for connect in range(0, 3):        
+            try:
+                self.init_display()
+                self.notFound = False
+            except Exception:
+                self.notFound = True
 
     def init_display(self):
         for cmd in (
