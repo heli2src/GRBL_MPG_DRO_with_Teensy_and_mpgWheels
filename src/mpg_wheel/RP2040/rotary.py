@@ -11,7 +11,7 @@ class Rotary:
 #    SW_PRESS = 4
 #    SW_RELEASE = 8
     
-    def __init__(self,dt,clk,sw):
+    def __init__(self, dt, clk, sw):
         self.dt_pin = Pin(dt, Pin.IN)
         self.clk_pin = Pin(clk, Pin.IN)
         self.sw_pin = Pin(sw, Pin.IN, Pin.PULL_UP)
@@ -25,16 +25,22 @@ class Rotary:
         self.buttontime = 0
         self.arg = array.array('i',[0, 0, 1])
         self.increment = 1
+        self._enable = False
+        
+    def enable(self, value):
+        self._enable = value
         
     def rotary_change(self, pin):
         new_status = (self.dt_pin.value() << 1) | self.clk_pin.value()
         if new_status == self.last_status:
             return
         transition = (self.last_status << 2) | new_status
+        if not self._enable:
+            return
         if transition == 0b1110:
-            self.arg[0] += self.increment
+            self.arg[0] -= self.increment
         elif transition == 0b1101:
-            self.arg[0] -= self.increment    
+            self.arg[0] += self.increment    
         if transition == 0b1110 or transition == 0b1101:
             self.newtime = utime.ticks_us()
             diff = utime.ticks_diff(self.newtime, self.lasttime)
