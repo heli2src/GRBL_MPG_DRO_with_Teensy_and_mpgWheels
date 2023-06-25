@@ -65,6 +65,8 @@ uint16_t TITLE_BACK = C_VALUES[36];
 #define FONT_ITEM   Arial_16             // font for menus
 #define FONT_TITLE  Arial_24_Bold        // font for all headings
 
+struTarget target;
+
 typedef struct {
     short numstate;
     void (*function)();
@@ -253,8 +255,8 @@ FlickerFreePrint<ILI9341_t3> Flickerlabel[4]= {
      FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
 };
 
-//Button Buttons[4] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display),};
-Button Buttons[MAXBUTTONS](&Display);
+Button Buttons[MAXBUTTONS] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),};
+//Button Buttons[MAXBUTTONS](&Display);
 
 //ItemMenu MainMenu(&Display, true);
 //EditMenu Drehen(&Display, true);
@@ -403,7 +405,7 @@ void Dinit(void) {
            {  10,   10, C_WHITE, "T", "      --  (c) Heli2  --", 0}, // 0
            { 110,   80, C_BLUE,  "T", "Elektronische",           0}, // 1
            { 120,  120, C_BLUE,  "T", "Leitspindel",             0}, // 2            
-           { 130,  160, C_BLUE,  "T", "V0.12a",                   0}, // 3
+           { 130,  160, C_BLUE,  "T", "V0.13",                   0}, // 3
            //{ 130,  160, C_BLUE,  "T", eeprom.Version,            0}, // 3
         };
         DEBUG("   Dinit: Cinit");  
