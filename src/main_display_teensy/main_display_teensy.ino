@@ -53,6 +53,8 @@
         -  mpg slave id must be changed for each achse
         - start.taste am Display geht nicht mehr??
         - speed von mpg bei x10, x100 über Fz, Fx einstellungen
+        -  handwheel.ino:
++            implemented : only id=3 (change to all axis)
  *
  * 
  */
