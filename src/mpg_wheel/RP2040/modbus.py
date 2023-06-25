@@ -111,7 +111,7 @@ class Modbus:
             self._print_debug("Serial port {} already exists".format(port))
             self.serial = _serialports[port]
         self._latest_read_times = 0
-        self.timeout = int(1750 * 3.5 )
+        self.timeout_time = int(1750 * 3.5 )
         self.count = 0
         self.rw = 1
         self.regMemory = []
@@ -182,10 +182,11 @@ class Modbus:
     
     def receive(self):
         rxData = self.rxChar()
-        if rxData != None:
+        if rxData is not None:
+            self.dprint(rxData)
             self.rxbuffer += rxData
             self.count += 1
-            if utime.ticks_us()-self._latest_read_times>self.timeout:    #new frame start
+            if utime.ticks_us()-self._latest_read_times>self.timeout_time:    #new frame start
                 self.count = 0
             elif self.count==1 and self.rxbuffer[0] == self.address:
                 if rxData > b'\x04':
@@ -201,10 +202,11 @@ class Modbus:
                     self.error = _errortype[0]
                     print(self.error)
             elif self.rw==0 and self.count > 9:
-                self.dprint(f'write {self.rxbuffer} not implemented yet')
-        elif utime.ticks_us()-self._latest_read_times>self.timeout:          
+                self.dprint(f'{self.__class__.__name__}.write {self.rxbuffer} not implemented yet')
+        elif utime.ticks_us()-self._latest_read_times>self.timeout_time:          
             self.rxbuffer = bytes()
             self.count = 0
+            # self.dprint(f'{self.__class__.__name__}.receive: timeout > {self.timeout_time}')
         return None
                 
     def send_dat(self, regaddr, regcnt):
