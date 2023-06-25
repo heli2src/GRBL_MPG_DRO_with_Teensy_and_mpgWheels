@@ -4,13 +4,13 @@ MicroPython v1.19.1 on 2022-10-04; Raspberry Pi Pico with RP2040
 https://pypi.org/project/micropython-modbus/
 	https://github.com/brainelectronics/micropython-modbus
 
-Stecker RJ12
-	Pin 1 - Vdd  (5V)
-	Pin 2 - A    (next)
-	Pin 3 - A
-	Pin 4	- B
-	Pin 5 - B    (next)
-	Pin 6 - Masse
+Stecker RJ12			see https://instrumentic.info/de/rj12-kabel.html#gsc.tab=0
+	Pin 1 - Vdd  (5V)		blau
+	Pin 2 - A    (next)		gelb
+	Pin 3 - A			grün
+	Pin 4 - B			rot
+	Pin 5 - B    (next)		schwarz
+	Pin 6 - Masse			weiss
 
 
 modbus:
