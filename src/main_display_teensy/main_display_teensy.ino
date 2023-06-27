@@ -88,6 +88,7 @@ void setup()
       eeprom_write_default();
       eeprom_read();
    }
+   target.fzmin = eeprom.fzmin;
    MyDisplay_init();
    //Switch_init();
    DROInitCanvas();
