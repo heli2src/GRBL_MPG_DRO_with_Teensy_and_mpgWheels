@@ -8,7 +8,7 @@
 **
 **
 **	-----------------------------------------------------------------------
-** \par           Copyright (c) 2021 Heli2
+** \par           Copyright (c) 2023 Heli2
 **
 ** \author        C.Jung
 ** \version       V0.01
@@ -66,11 +66,13 @@ typedef struct {
   float fx;
   float fz; 
   float fzOld; 
+  float fzmin;      // value for Fz mm/min
   float x;
   float y;
   float z;
   bool changed;
 } struTarget;
+struTarget target;
 
 typedef enum {
     WSTART   =  0,          // Wellcome Page
@@ -81,7 +83,8 @@ typedef enum {
     WALARM = 5,             // display alarm messages
     WHOME = 6,              // go to position 
     WRESET = 7,             // send reset & unlock
-    WEND = 8
+    WDEFAULT = 8,           // set default values
+    WEND = 9
 } EnumWidgetState;
 
 typedef enum {

@@ -1,6 +1,6 @@
 /*
   The MIT License (MIT)
-  Copyright (c) 2022 Christian Jung
+  Copyright (c) 2023 Christian Jung
   Permission is hereby granted, free of charge, to any person obtaining a copy of
   this software and associated documentation files (the "Software"), to deal in
   the Software without restriction, including without limitation the rights to
@@ -65,8 +65,6 @@ uint16_t TITLE_BACK = C_VALUES[36];
 #define FONT_ITEM   Arial_16             // font for menus
 #define FONT_TITLE  Arial_24_Bold        // font for all headings
 
-struTarget target;
-
 typedef struct {
     short numstate;
     void (*function)();
@@ -82,7 +80,8 @@ struStates  dstate[WEND+1] = {   //assign numstate to the the calling function a
   {    WMENUE,  Dmenue,   0},         // 4
   {    WALARM,  Dalarm,   0},         // 5
   {     WHOME,   Dhome,   0},         // 6
-  {    WRESET,  Dreset,   0}          // 7   
+  {    WRESET,  Dreset,   0},         // 7   
+  {  WDEFAULT, Ddefault,  0}          // 8
  };
 
 typedef struct {
@@ -104,7 +103,7 @@ typedef struct {
 
 structAlarmcodes alarmcodes []= {
     {"Unlock", "Home", "unknown Alarm :-( "},
-    {"",       "Home", "Hard limit has been\ntriggered.\n\nDo Re-homing"},                   //1
+    {"Unlock", "Home", "Hard limit has been\ntriggered.\n\nDo Re-homing or unlock"},        //1
     {"",       "Unlock", "Soft limit alarm.\nG-code motion target\nexceeds machine travel.\nAlarm may be safely\nunlocked"},         //2
     {"",       "Home", "Reset while in\nmotion. Re-homing"},                                //3
     {"",       "", "Probe fail. "},                                                         //4
@@ -255,7 +254,7 @@ FlickerFreePrint<ILI9341_t3> Flickerlabel[4]= {
      FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
 };
 
-Button Buttons[MAXBUTTONS] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),};
+Button Buttons[4] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display),};
 //Button Buttons[MAXBUTTONS](&Display);
 
 //ItemMenu MainMenu(&Display, true);
@@ -437,9 +436,10 @@ void Dmenue(void){
     case Cinit: {
         struDisplay mytext []= {
            { 100,   10, TextColor, "T", "Menue",                  0}, // 0
-           { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Aussendrehen ",      WDREHEN},  // 1
-           { 140, COLUMN1+11+2*COLUM_DISTANCE, TextColor, "B", "Home         ",      WHOME},    // 3
-           { 140, COLUMN1+11+3*COLUM_DISTANCE, TextColor, "B", "Reset        ",      WRESET}    // 4           
+           { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Aussendrehen  ",      WDREHEN},  // 1
+           { 140, COLUMN1+11+1*COLUM_DISTANCE, TextColor, "B", "Default values",      WDEFAULT}, // 2           
+           { 140, COLUMN1+11+2*COLUM_DISTANCE, TextColor, "B", "Home          ",      WHOME},    // 3
+           { 140, COLUMN1+11+3*COLUM_DISTANCE, TextColor, "B", "Reset         ",      WRESET}    // 4           
         };
         show_display(sizeof(mytext)/sizeof(struDisplay), mytext);
         break;}
@@ -534,6 +534,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
       if (mystate.grblState == Idle && mystate.alarm==0 && mystate.error==0 && mystate.prevstate != WSTART){// everything is ok, so switch to previous state
           mystate.state =  mystate.prevstate;
           DEBUG("Dalarm: alarm/error cleared", mystate.grblState, "switch to", mystate.state);
+          mystate.execute = Cend;
       }else if (mystate.prevstate == WSTART && mystate.MPGkey == 0) {
           mystate.state =  mystate.prevstate;
           DEBUG("Dalarm: Start ok, switch to ", mystate.state);
@@ -684,7 +685,7 @@ void Dnum(void) {        //virtual numeric keyboard
           //DEBUG(input.cnt, input.sign, input.value);          
         }
         break;}
-   case Cend: {                                                     // this must be changed: make it independent from the state 
+   case Cend: {                                                     // this should be changed: make it independent from the state 
         DEBUG("   Dnum: Cend", mystate.bindex, input.fvalue);
         if (mystate.bindex == 0) target.fz = abs(input.fvalue);
         if (mystate.bindex == 1) target.x = input.fvalue;
@@ -693,6 +694,44 @@ void Dnum(void) {        //virtual numeric keyboard
         mystate.state = mystate.prevstate;
         break;}
    }
+}
+
+void Ddefault(void) {              // set default values 
+   switch (mystate.execute) {
+    case Cinit: {
+        struDisplay mytext[]= {
+           { 30,                           7, TextColor, "T",  "Set default values",      0}, // 0   
+           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 500.000",        WNUM}       // 1   Button Fz:
+        };
+        show_display(sizeof(mytext)/sizeof(struDisplay), mytext);
+        // Fz:
+        Display.setFont(F_A24);
+        Display.setCursor(40, COLUMN1); Display.print("F");
+        Display.setFont(F_A10);
+        Display.setCursor(58, COLUMN1+15); Display.print("z");
+        Display.setFont(F_A24);
+        Display.setCursor(66, COLUMN1);Display.print(":");
+
+        // mm/min
+        Display.setFont(F_A10); 
+        Display.setCursor(210,COLUMN1+12+0*COLUM_DISTANCE);Display.print("mm/min");
+        target.changed = true;
+        DisplayMessageButtons("","ok");
+        break;}
+     case Crun: {
+        if (target.changed) {
+            // DEBUG("   Adrehen Crun", target.x, target.z);
+            sprintf(buffer10, "%.3f", target.fz);
+            Buttons[0].setText(buffer10);
+            target.changed = false;
+            Buttons[0].show();            
+        }
+        break;}
+  case Cend: {
+        DEBUG("   Ddefault: Cend", mystate.bindex, input.fvalue);
+        mystate.state = WMENUE;       // mystate.prevstate;
+        break;}
+    }
 }
 
 void Doffset(void) {  
@@ -816,6 +855,14 @@ void set_grblstate(int value, const char* string, uint16_t color, int alarm, int
     }
 }
 
+void debugDisplay(const char *string){
+  Display.setFont(F_A10);  
+  //Display.setTextColor(ddisplay[index].TextColor);
+  Display.setCursor(10 , 200 );
+  Display.fillRect(10, 200, 200, 10, BackColor);
+  Display.print(string);
+}
+
 void processJoystick (int MPGkey) {
   // translate the values from Joystick to drive commands
     int myoffset = 0;
@@ -888,11 +935,14 @@ void processMpg (char MPGkey, int MPGcnt, int MPGswitch) {
   // translate the values from MPG-handwheel to drive commands
   // is called when you operate the hand wheel
   // MPGkey = X,Y,Z
-    int myoffset = 0;
     int index = int(MPGkey-'X'); 
-    bool twice = false;
+    // DEBUG("processMpg", MPGkey, MPGcnt, MPGswitch);
+    char buffer50[50];
+    sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGswitch);
+    debugDisplay(buffer50);
     if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey!= 0))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging
- //   if (true) {
+        // DEBUG(mystate.grblState, Idle, Jog, mystate.state, MPGkey);
+        
         static char command[50];
         float speed;
         unsigned long time = millis();
@@ -914,7 +964,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGswitch) {
             Display.setFont(F_A10); 
             Display.setCursor(120,COLUMN1+12+0*COLUM_DISTANCE-32);Display.print("mm/min");
         }*/
-        sprintf(command, "$J=G91 %c%.3f F%.1f", MPGkey, float(MPGcnt)*0.01, speed);
+        sprintf(command, "$J=G91 %c%.3f F%.1f", MPGkey, float(MPGcnt)*0.01, speed);   //e.q. $J=G91 Z1.000 F100.0   G91 = relative movement 
         serial_writeLn(command);
         DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, command);      
     }          
@@ -963,10 +1013,10 @@ void processKeypress (int DROkey, int keydown, float rpm){
                   serial_writeLn(command);
                   break;
               }else if (mystate.state == WALARM){
-                  DEBUG("Idle with Alarm....?!");
+                  DEBUG("processKeypress: case Idle: Alarm");
               }
           case Alarm:  //=5
-              DEBUG("  Alarm");
+              DEBUG("  processKeypress: case Alarm");
               unsigned int msgindex=0;
               char *buttonL = alarmcodes[0].buttonL;
               char *buttonR = alarmcodes[0].buttonR;
@@ -999,7 +1049,7 @@ void processKeypress (int DROkey, int keydown, float rpm){
                   if (strcmp(dbutton, "Home")==0){
                       DEBUG("processKeypress Home");
                       serial_putC(24);
-                      sprintf(buffer10, "$X");                 // unlock
+                      sprintf(buffer10, "$X ");                 // unlock
                       serial0_writeLn(buffer10);
                       sprintf(buffer10, "$H");
                   }else if (strcmp(dbutton, "Reset")==0) {
@@ -1016,6 +1066,7 @@ void processKeypress (int DROkey, int keydown, float rpm){
                   }
                   serial0_writeLn(buffer10);
                   serial_writeLn(buffer10);
+                  delay(200);
               }
               break;
     }
