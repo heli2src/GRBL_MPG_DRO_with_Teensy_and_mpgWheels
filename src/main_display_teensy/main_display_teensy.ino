@@ -81,19 +81,22 @@ void setup()
 //   read_mac();
 //   DEBUG("MAC:");
 //   print_mac();    
-//   DEBUG(" ");   
+//   DEBUG(" ");  
+// eeprom_write_default(); 
    eeprom_read();
    if (strcmp(eeprom.Copyright, "Heli2")!=0) {
       DEBUG("EEPROM init first");
       eeprom_write_default();
       eeprom_read();
    }
-   target.fzmin = eeprom.fzmin;
+   DEBUG("EEPROM read ok");
    MyDisplay_init();
+   DEBUG("Display init ok");   
    //Switch_init();
    DROInitCanvas();
    DROShowCanvas();
    MPG_init();
+   DEBUG("Init ok");   
 } 
 
 bool tim50=false; 

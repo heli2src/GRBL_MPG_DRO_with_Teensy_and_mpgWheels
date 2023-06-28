@@ -6,6 +6,7 @@ void  eeprom_read(void){
     EEPROM.get( 0, eeprom );
     DEBUG(eeprom.Copyright, eeprom.Version);
     DEBUG("Background",eeprom.BGred,eeprom.BGgreen,eeprom.BGblue);
+    DEBUG("Default",eeprom.fzmin);
 }
 
 void eeprom_write(void){
