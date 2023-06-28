@@ -154,7 +154,7 @@ static void displayGrblData (char *line)
             settings->is_loaded = false;
 
         if(grbl_data->changed.state) {
-            set_grblstate(grbl_data->grbl.state, grbl_data->grbl.state_text, grbl_data->grbl.state_color, grbl_data->alarm, grbl_data->error);
+            set_grblstate(grbl_data->grbl.state, grbl_data->grbl.state_text, grbl_data->grbl.state_color, grbl_data->alarm, grbl_data->error);   # update the state to mydisplay
 //CJ            if  (grbl_data->grbl.state != Alarm)      
 //CJ            leds.run = grbl_data->grbl.state == Run || grbl_data->grbl.state == Jog;
 //CJ            leds.hold = grbl_data->grbl.state == Hold;

@@ -697,7 +697,8 @@ void MyDisplay_loop(void){
   // begin:  dstate.Cinit        # initialize the Page with values and define the polling keys and button to execute the connected-function 
   //         loop dstate.run until news state:
   //            - show new values
-  //            - polling touchscreen and keys
+  //            - polling touchscreen 
+  //                  todo: polling keys for the use of the keys also call at page
   //            - execute button function and change the state (defined in the struPage from the page)
   //                   if page Dnum.Cend calling, then the values assigned to its variable    --> this should be make more flexibel
   //         dstate.Cend from the old state   
@@ -868,6 +869,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
         unsigned long dtime = time-mystate.mpgtime[index];
         mystate.mpgtime[index] = time;   
         // 
+        // todo:  for better and smoother driving evaluate MPGdtime (it is the time beetween 2 handwheel pulses)
         float mul = 100.0;
         if (abs(MPGcnt) < 5) speed = mul;
         else if (abs(MPGcnt) < 20) speed = mul*20;
@@ -880,32 +882,11 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
         //  speed = target.fz*10;
         //else
         //  speed = target.fz*100;
- 
- /*       if ((millis()-mystate.buttontime)> 2*mystate.buttonDtime){
-            target.fzOld = target.fz;
-            Display.fillRect(120, COLUMN1+12+0*COLUM_DISTANCE-32, 50, 30, BackColor);
-            Display.setFont(F_A10); 
-            Display.setCursor(120,COLUMN1+12+0*COLUM_DISTANCE-32);Display.print("mm/min");
-        }*/
         sprintf(command, "$J=G91 %c%.3f F%.1f", MPGkey, float(MPGcnt)*0.01, speed);   //e.q. $J=G91 Z1.000 F100.0   G91 = relative movement 
         serial_writeLn(command);
         DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, command);      
-    }          
-/*    }else if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey== 0)){
-        serial_putC(CMD_STOP); 
-        serial0_writeLn("processMPGpress Stop");
-        Display.fillRect(120, COLUMN1+12+0*COLUM_DISTANCE-32, 50, 30, BackColor);
-        Display.setFont(F_A10); 
-        Display.setCursor(120,COLUMN1+12+0*COLUM_DISTANCE-32);Display.print("mm/U");
-        target.fz = target.fzOld;
-        mystate.MPGkey = MPGkey;
-        target.changed = true;               
-    }else if ((millis()-mystate.buttontime)>mystate.buttonDtime)
-        mystate.MPGkey = MPGkey;
-        */
+    } 
 }
-
-
 
 
 void processKeypress (int DROkey, int keydown, float rpm){
