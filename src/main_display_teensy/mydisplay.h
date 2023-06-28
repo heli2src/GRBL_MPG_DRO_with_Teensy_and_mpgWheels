@@ -194,7 +194,7 @@ typedef struct {
     char Typ[4];    
     char Text [26];     // maximum length from a string +1
     int Next;
-} struDisplay;
+} struPage;
 
 /* ------------------
    Public VARIABLES

@@ -152,8 +152,8 @@ FlickerFreePrint<ILI9341_t3> Flickerlabel[4]= {
      FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
 };
 
-Button Buttons[4] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display),};
-//Button Buttons[MAXBUTTONS](&Display);
+//Button Buttons[5] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),};
+Button Buttons[MAXBUTTONS](&Display);
 
 //ItemMenu MainMenu(&Display, true);
 //EditMenu Drehen(&Display, true);
@@ -189,8 +189,8 @@ bool ProcessButtonPress(Button TheButton) {
     return false;
 } 
 
-void show_display(int ssize, struDisplay* ddisplay){
-  // struDisplay = {int x; int y; int TextColor; char Typ[4]; char Text [26]; int Next;} 
+void showPage(int ssize, struPage* ddisplay){
+  // struPage = {int x; int y; int TextColor; char Typ[4]; char Text [26]; int Next;} 
   Display.fillScreen(BackColor);
   for (byte index = 0; index <MAXBUTTONS; index++) {
       Buttons[index].hide();  
@@ -274,16 +274,16 @@ void showMessage(void){         // display a status and Button Line in the lower
     if (mystate.svisible && mystate.change_grblState) {    // Display active buttons
         mystate.change_grblState = false;  
         if (mystate.grblState == Idle) {
-            DisplayMessageButtons("Start","Z=0");
+            showMessageButtons("Start","Z=0");
         }else if (mystate.grblState == Run){
             mystate.alarm = 0;
-            DisplayMessageButtons("Stop","");
+            showMessageButtons("Stop","");
         }
     }else if (!mystate.svisible)
         mystate.change_grblState = true;
 }
 
-void DisplayMessageButtons(const char* buttonL, const char* buttonR){
+void showMessageButtons(const char* buttonL, const char* buttonR){
 // Display the messages for the bottom control buttons  
     Display.fillRect(20, 220, 50, 30, BackColor);
     Display.fillRect(250, 220, 70, 30, BackColor);
@@ -298,7 +298,7 @@ void DisplayMessageButtons(const char* buttonL, const char* buttonR){
 void Dinit(void) {
    switch (mystate.execute) {
     case Cinit: {    
-        struDisplay mytext[]= {
+        struPage mytext[]= {
            {  10,   10, C_WHITE, "T", "      --  (c) Heli2  --", 0}, // 0
            { 110,   80, C_BLUE,  "T", "Elektronische",           0}, // 1
            { 120,  120, C_BLUE,  "T", "Leitspindel",             0}, // 2            
@@ -306,7 +306,7 @@ void Dinit(void) {
            //{ 130,  160, C_BLUE,  "T", eeprom.Version,            0}, // 3
         };
         DEBUG("   Dinit: Cinit");  
-        show_display(sizeof(mytext)/sizeof(struDisplay), mytext);
+        showPage(sizeof(mytext)/sizeof(struPage), mytext);
         delay(1000);
         mystate.stime = millis();
         mystate.prevstate = WSTART;    
@@ -332,14 +332,14 @@ void Dinit(void) {
 void Dmenue(void){
    switch (mystate.execute) {
     case Cinit: {
-        struDisplay mytext []= {
+        struPage mytext []= {
            { 100,   10, TextColor, "T", "Menue",                  0}, // 0
            { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Aussendrehen  ",      WDREHEN},  // 1
            { 140, COLUMN1+11+1*COLUM_DISTANCE, TextColor, "B", "Default values",      WDEFAULT}, // 2           
            { 140, COLUMN1+11+2*COLUM_DISTANCE, TextColor, "B", "Home          ",      WHOME},    // 3
            { 140, COLUMN1+11+3*COLUM_DISTANCE, TextColor, "B", "Reset         ",      WRESET}    // 4           
         };
-        show_display(sizeof(mytext)/sizeof(struDisplay), mytext);
+        showPage(sizeof(mytext)/sizeof(struPage), mytext);
         break;}
    case Crun:{
         break;
@@ -374,7 +374,7 @@ void Dreset(void){
 void Adrehen(void) {              // Aussendrehen
    switch (mystate.execute) {
     case Cinit: {
-        struDisplay mytext[]= {
+        struPage mytext[]= {
            { 50,                           7, TextColor, "T",  "Aussendrehen",      0}, // 0   
            {130, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  "  00.000",        WNUM}, // 1   Button Fz:
            {130, COLUMN1+12+1*COLUM_DISTANCE, TextColor, "B",  "  00.000",        WNUM}, // 2   Button X:
@@ -383,7 +383,7 @@ void Adrehen(void) {              // Aussendrehen
            { 15, COLUMN1+12+2*COLUM_DISTANCE, TextColor, "Bk", "  0",         WAOFFSET}, // 5
            { 290,                         20, TextColor, "Bk", " M",           WMENUE}, // 6           
         };
-        show_display(sizeof(mytext)/sizeof(struDisplay), mytext);
+        showPage(sizeof(mytext)/sizeof(struPage), mytext);
         Display.setTextColor(TextColor);
         // Fz:
         Display.setFont(F_A24);
@@ -498,7 +498,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
             Display.setCursor(40, 90+y*20);
             Display.print(F(line));
         }
-        DisplayMessageButtons(buttonL, buttonR);
+        showMessageButtons(buttonL, buttonR);
         mystate.lastAlarm = mystate.alarm;
         mystate.lastError = mystate.error;
         break;
@@ -514,7 +514,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
 void Dnum(void) {        //virtual numeric keyboard
    switch (mystate.execute) {
     case Cinit: {
-        struDisplay mytext [15]= { 
+        struPage mytext [15]= { 
            {  40,   40, TextColor, "B", "7",      0}, //0
            { 120,   40, TextColor, "B", "8",      0}, //1 
            { 200,   40, TextColor, "B", "9",      0}, //2 
@@ -531,7 +531,7 @@ void Dnum(void) {        //virtual numeric keyboard
            { 120,  220, TextColor, "B", ".",      0}, //13  
            { 220,  220, TextColor, "B", " 000.00",  0}, //14
         };
-        show_display(sizeof(mytext)/sizeof(struDisplay), mytext);
+        showPage(sizeof(mytext)/sizeof(struPage), mytext);
         input.cnt = 0;
         input.value[0] = 0;
         Buttons[14].setText(" 000.000");
@@ -585,9 +585,13 @@ void Dnum(void) {        //virtual numeric keyboard
         break;}
    case Cend: {                                                     // this should be changed: make it independent from the state 
         DEBUG("   Dnum: Cend", mystate.bindex, input.fvalue);
-        if (mystate.bindex == 0) target.fz = abs(input.fvalue);
-        if (mystate.bindex == 1) target.x = input.fvalue;
-        else if (mystate.bindex == 2) target.z = input.fvalue;
+        if (mystate.prevstate == WDREHEN ) {
+            if (mystate.bindex == 0) target.fz = abs(input.fvalue);
+            else if (mystate.bindex == 1) target.x = input.fvalue;
+            else if (mystate.bindex == 2) target.z = input.fvalue;
+        }else if (mystate.prevstate == WDEFAULT ) {
+           if (mystate.bindex == 0) target.fzmin = abs(input.fvalue);
+        }
         target.changed = true;
         mystate.state = mystate.prevstate;
         break;}
@@ -597,11 +601,12 @@ void Dnum(void) {        //virtual numeric keyboard
 void Ddefault(void) {              // set default values 
    switch (mystate.execute) {
     case Cinit: {
-        struDisplay mytext[]= {
+        struPage mytext[]= {
            { 30,                           7, TextColor, "T",  "Set default values",      0}, // 0   
-           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 500.000",        WNUM}       // 1   Button Fz:
+           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 500.000",        WNUM},      // 1   Button Fzmin:
+           {140, COLUMN1+12+3*COLUM_DISTANCE, TextColor, "B",  " Return ",        WMENUE}     // 2   Button return
         };
-        show_display(sizeof(mytext)/sizeof(struDisplay), mytext);
+        showPage(sizeof(mytext)/sizeof(struPage), mytext);
         Display.setTextColor(TextColor);
         // Fz:
         Display.setFont(F_A24);
@@ -614,7 +619,7 @@ void Ddefault(void) {              // set default values
         Display.setFont(F_A10); 
         Display.setCursor(210,COLUMN1+12+0*COLUM_DISTANCE);Display.print("mm/min");
         target.changed = true;
-        DisplayMessageButtons("","ok");
+        //showMessageButtons("","ok");
         break;}
      case Crun: {
         if (target.changed) {
@@ -627,7 +632,9 @@ void Ddefault(void) {              // set default values
         break;}
   case Cend: {
         DEBUG("   Ddefault: Cend", mystate.bindex, input.fvalue);
-        mystate.state = WMENUE;       // mystate.prevstate;
+        eeprom.fzmin = target.fzmin;
+        eeprom_write();
+        //mystate.state = WMENUE;       // mystate.prevstate;
         break;}
     }
 }
@@ -646,7 +653,7 @@ void Doffset(void) {
     mystate.state = mystate.prevstate;    
 }
 
-void DisplayFlags(void) {
+void showFlags(void) {
   if (mystate.flags.change) {;
     Display.setFont(F_A10);
     Display.setCursor(5, 230);
@@ -659,6 +666,7 @@ void DisplayFlags(void) {
 
 void MyDisplay_init(void) { 
   // configure the display and the state machine for the menues  
+    DEBUG("MyDisplay_init start");
     Display.begin();
     Display.setRotation(1);   
     Display.fillScreen(BackColor);
@@ -671,7 +679,7 @@ void MyDisplay_init(void) {
       Buttons[index].hide();
     }
     mystate.execute = Cinit;
-
+    target.fzmin = eeprom.fzmin;
     target.fz = 1.0;
     target.x = 0.0;
     target.y = 0.0;    
@@ -690,7 +698,7 @@ void MyDisplay_loop(void){
   //         loop dstate.run until news state:
   //            - show new values
   //            - polling touchscreen and keys
-  //            - execute button function and change the state (defined in the struDisplay from the page)
+  //            - execute button function and change the state (defined in the struPage from the page)
   //                   if page Dnum.Cend calling, then the values assigned to its variable    --> this should be make more flexibel
   //         dstate.Cend from the old state   
   //         jump to begin   
@@ -842,14 +850,14 @@ void processJoystick (int MPGkey) {
         mystate.MPGkey = MPGkey;
 }
 
-void processMpg (char MPGkey, int MPGcnt, int MPGswitch) {
+void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
   // translate the values from MPG-handwheel to drive commands
   // is called when you operate the hand wheel
   // MPGkey = X,Y,Z
     int index = int(MPGkey-'X'); 
-    // DEBUG("processMpg", MPGkey, MPGcnt, MPGswitch);
+    // DEBUG("processMpg", MPGkey, MPGcnt, MPGdtime);
     char buffer50[50];
-    sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGswitch);
+    sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGdtime);
     debugDisplay(buffer50);
     if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey!= 0))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging
         // DEBUG(mystate.grblState, Idle, Jog, mystate.state, MPGkey);
@@ -860,14 +868,18 @@ void processMpg (char MPGkey, int MPGcnt, int MPGswitch) {
         unsigned long dtime = time-mystate.mpgtime[index];
         mystate.mpgtime[index] = time;   
         // 
-        if (MPGswitch == 0) {
-          speed = 600.0 * float(abs(MPGcnt)) / float(dtime);        // 60*1000 MPGcnt *0.01 / (millis() - oldmillis)  				= mm/min
-          if (speed < 1.00)
-            speed = 1.00;
-        }else if (MPGswitch == 1) 
-          speed = target.fz*10;
-        else
-          speed = target.fz*100;
+        float mul = 100.0;
+        if (abs(MPGcnt) < 5) speed = mul;
+        else if (abs(MPGcnt) < 20) speed = mul*20;
+        else speed = mul * 50;
+        //if (MPGswitch == 0) {
+        //  speed = 600.0 * float(abs(MPGcnt)) / float(dtime);        // 60*1000 MPGcnt *0.01 / (millis() - oldmillis)  				= mm/min
+        //  if (speed < 1.00)
+        //    speed = 1.00;
+        //}else if (MPGswitch == 1) 
+        //  speed = target.fz*10;
+        //else
+        //  speed = target.fz*100;
  
  /*       if ((millis()-mystate.buttontime)> 2*mystate.buttonDtime){
             target.fzOld = target.fz;
@@ -914,7 +926,7 @@ void processKeypress (int DROkey, int keydown, float rpm){
               if (mystate.state == WDREHEN){
                   if (DROkey == 0){                       // left button
                       if (rpm == 0.0) {
-                          sprintf(command, "G94 F%.3f G90 G01 Z%.3f", target.fz, target.z);     // *100 ??
+                          sprintf(command, "G94 F%.3f G90 G01 Z%.3f", target.fzmin, target.z);     // *100 ??
                       }else{
                           sprintf(command, "G95 F%.3f G90 G01 Z%.3f", target.fz, target.z);
                       }
