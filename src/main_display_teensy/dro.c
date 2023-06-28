@@ -36,7 +36,7 @@ static char buffer[50];
 char DROkey;
 char MPGkey;
 int MPGcnt;
-int MPGswitch;
+int MPGdtime;
 
 typedef struct {
     float mpg_base;
@@ -320,7 +320,7 @@ void DROProcessEvents (void)
 
      if(event & EVENT_MPG) {
           //processJoystick(MPGkey);          //from mydisplay.ino
-          processMpg(MPGkey, MPGcnt, MPGswitch);         //from mydisplay.ino          
+          processMpg(MPGkey, MPGcnt, MPGdtime);         //from mydisplay.ino          
           event &= ~ EVENT_MPG;       
      }
         
@@ -389,13 +389,13 @@ void DROJoystickEvent (bool change, int key)
     MPGkey = key;
 }
 
-void DROmpgEvent (bool change, int key, int cnt, int modeswitch)
+void DROmpgEvent (bool change, int key, int cnt, int dtime)
 {
     if (change)
        event |= EVENT_MPG;
     MPGkey = key; 
     MPGcnt = cnt;
-    MPGswitch = modeswitch;
+    MPGdtime = dtime;
 }
   
 

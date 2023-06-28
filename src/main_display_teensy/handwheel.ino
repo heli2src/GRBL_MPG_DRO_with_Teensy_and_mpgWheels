@@ -49,10 +49,10 @@ void MPGPollSerial(void){
           uint result = _calculate_crc_string(mpg_data.block, mpg_data.counter);
           if (result == 0){    
              int mpg = int(mpg_data.block[3] << 8) + int(mpg_data.block[4]);
-             int modeswitch = int(mpg_data.block[5] << 8) + int(mpg_data.block[6]);             
+             int dtime = int(mpg_data.block[5] << 8) + int(mpg_data.block[6]);             
              if (mpg > 32768) mpg= mpg-65536;
              if (mpg != mpg_data.z) {
-               DROmpgEvent(true, 'Z', mpg-mpg_data.z, modeswitch);          
+               DROmpgEvent(true, 'Z', mpg-mpg_data.z, dtime);          
                mpg_data.z = mpg;
              }        
           }else{
