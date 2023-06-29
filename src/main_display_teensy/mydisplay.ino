@@ -91,8 +91,8 @@ typedef struct {
   char value[INPUTBUFFER] = "\0";
   float fvalue = 0.0;
   int sign = 1;
-  float max = 700.0;
-  float min = -700.0;
+  float max = 900.0;
+  float min = -900.0;
   int decplace = 3;
   int signcnt = 0;
 }input_t;
@@ -119,7 +119,9 @@ typedef struct {
     int lastError = 0;    
                          //                          0         1      2      3       4       5        6       7       8      9        10
     int grblState = 0;   // = dro.c/grbl.state : "Unknown", "Idle", "Run", "Jog", "Hold", "Alarm", "Check", "Door", "Tool", "Home", "Sleep"
-    int substate;    
+    int substate;
+    int DROkey = -1;
+    float rpm = 0.0;
     bool change_grblState = true;
     uint16_t  color_grblState;
     char grblStateText[8];
@@ -131,7 +133,6 @@ typedef struct {
     unsigned long mpgtime[3]= { 0, 0, 0};
     float jogS =0;
     float jogF =0;
-    int MPGkey = 0;
     struMyFlags flags;
   }struMyStates;
   
@@ -313,19 +314,15 @@ void Dinit(void) {
         break;}
    case Crun:{
         if (millis()-mystate.stime > 2000) {
-            if (mystate.MPGkey != 0 ){
-                mystate.alarm = 20;
-                mystate.state = WALARM;
-                mystate.color_grblState = C_RED;
-            }else 
-                mystate.state = WDREHEN;
+            mystate.state = WDREHEN;
         }
-        break;
-        }
+        break;}
    case Cend: {
         DEBUG("   Dinit: Cend");      
-        break;
-        }
+        break;}
+   case Ckeys:{
+        DEBUG("   Dmenue Ckeys", mystate.DROkey);  
+        break;}        
    }
 }
 
@@ -347,7 +344,10 @@ void Dmenue(void){
    case Cend: {
 //        DEBUG("   Dmenue: Cend");      
         break;
-        }        
+        }
+   case Ckeys:{
+        DEBUG("   Dmenue Ckeys", mystate.DROkey);
+        break;}            
   }
 }
 
@@ -387,11 +387,11 @@ void Adrehen(void) {              // Aussendrehen
         Display.setTextColor(TextColor);
         // Fz:
         Display.setFont(F_A24);
-        Display.setCursor(40, COLUMN1); Display.print("F");
+        Display.setCursor(35, COLUMN1); Display.print("F");
         Display.setFont(F_A10);
-        Display.setCursor(58, COLUMN1+15); Display.print("z");
+        Display.setCursor(53, COLUMN1+15); Display.print("z");
         Display.setFont(F_A24);
-        Display.setCursor(66, COLUMN1);Display.print(":");
+        Display.setCursor(61, COLUMN1);Display.print(":");
         // mm/U
         Display.setFont(F_A10); 
         Display.setCursor(120,COLUMN1+12+0*COLUM_DISTANCE-32);Display.print("mm/U");
@@ -423,6 +423,24 @@ void Adrehen(void) {              // Aussendrehen
    case Cend: { 
 //        DEBUG("   Adrehen Cend");  
         break;}
+   case Ckeys:{
+          DEBUG("   Adrehen Ckeys", mystate.DROkey); 
+          if (mystate.grblState == Idle) {        // = 1
+              static char command[50];
+              if (mystate.DROkey == 0){           // left button
+                  if (mystate.rpm == 0.0) {
+                      sprintf(command, "G94 F%.3f G90 G01 Z%.3f", target.fzmin, target.z);     // *100 ??
+                  }else{
+                      sprintf(command, "G95 F%.3f G90 G01 Z%.3f", target.fz, target.z);
+                  }
+              }else if (mystate.DROkey == 1)      // right button
+                  sprintf(command, "G00 Z0");     // Verfahren im Eilgang auf 0 
+              serial0_writeLn(command);
+              serial_writeLn(command);
+              mystate.DROkey = -1;
+              break;
+          }          
+        break;}
    }
 }
 
@@ -433,7 +451,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
           mystate.state =  mystate.prevstate;
           DEBUG("Dalarm: alarm/error cleared", mystate.grblState, "switch to", mystate.state);
           mystate.execute = Cend;
-      }else if (mystate.prevstate == WSTART && mystate.MPGkey == 0) {
+      }else if (mystate.prevstate == WSTART) {     // && mystate.MPGkey == 0) {
           mystate.state =  mystate.prevstate;
           DEBUG("Dalarm: Start ok, switch to ", mystate.state);
       }else{        
@@ -506,8 +524,10 @@ void Dalarm(void) {              // Widget for alarm + error messages
     case Cend: {
         DEBUG("   Dalarm: Cend", mystate.bindex, input.fvalue, mystate.state, mystate.oldstate, mystate.prevstate,);
         mystate.state = mystate.prevstate;
-        break;
-       }
+        break;}
+    case Ckeys:{
+          DEBUG("   Dalarm Ckeys", mystate.DROkey); 
+        break;}
    }
 }
 
@@ -595,6 +615,9 @@ void Dnum(void) {        //virtual numeric keyboard
         target.changed = true;
         mystate.state = mystate.prevstate;
         break;}
+    case Ckeys:{
+          DEBUG("   Dnum Ckeys", mystate.DROkey); 
+        break;}        
    }
 }
 
@@ -603,8 +626,8 @@ void Ddefault(void) {              // set default values
     case Cinit: {
         struPage mytext[]= {
            { 30,                           7, TextColor, "T",  "Set default values",      0}, // 0   
-           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 500.000",        WNUM},      // 1   Button Fzmin:
-           {140, COLUMN1+12+3*COLUM_DISTANCE, TextColor, "B",  " Return ",        WMENUE}     // 2   Button return
+           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 500.000",        WNUM}      // 1   Button Fzmin:
+//           {140, COLUMN1+12+3*COLUM_DISTANCE, TextColor, "B",  " Return ",        WMENUE}     // 2   Button return
         };
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
         Display.setTextColor(TextColor);
@@ -619,7 +642,7 @@ void Ddefault(void) {              // set default values
         Display.setFont(F_A10); 
         Display.setCursor(210,COLUMN1+12+0*COLUM_DISTANCE);Display.print("mm/min");
         target.changed = true;
-        //showMessageButtons("","ok");
+        showMessageButtons("","ok");
         break;}
      case Crun: {
         if (target.changed) {
@@ -634,9 +657,15 @@ void Ddefault(void) {              // set default values
         DEBUG("   Ddefault: Cend", mystate.bindex, input.fvalue);
         eeprom.fzmin = target.fzmin;
         eeprom_write();
-        //mystate.state = WMENUE;       // mystate.prevstate;
         break;}
-    }
+  case Ckeys:{
+        DEBUG("   Ddefault Ckeys", mystate.DROkey);
+        if (mystate.DROkey == 1){           // right button
+            mystate.state = WMENUE;       // mystate.prevstate;
+        }
+        mystate.DROkey = -1;   
+        break;}
+   }
 }
 
 void Doffset(void) {  
@@ -680,7 +709,7 @@ void MyDisplay_init(void) {
     }
     mystate.execute = Cinit;
     target.fzmin = eeprom.fzmin;
-    target.fz = 1.0;
+    target.fz = 0.2;
     target.x = 0.0;
     target.y = 0.0;    
     target.z = 0.0;    
@@ -698,9 +727,9 @@ void MyDisplay_loop(void){
   //         loop dstate.run until news state:
   //            - show new values
   //            - polling touchscreen 
-  //                  todo: polling keys for the use of the keys also call at page
+  //                  polling keys is do in the main loop
   //            - execute button function and change the state (defined in the struPage from the page)
-  //                   if page Dnum.Cend calling, then the values assigned to its variable    --> this should be make more flexibel
+  //                   if page Dnum.Cend calling, then the values assigned to its variable    --> this should be done in the page functions
   //         dstate.Cend from the old state   
   //         jump to begin   
   //              
@@ -783,74 +812,6 @@ void debugDisplay(const char *string){
   Display.print(string);
 }
 
-void processJoystick (int MPGkey) {
-  // translate the values from Joystick to drive commands
-    int myoffset = 0;
-    bool twice = false;
-    if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey!= 0) && ((millis()-mystate.buttontime)>mystate.buttonDtime))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging
-        static char command[50];
-        if ((millis()-mystate.buttontime)> 2*mystate.buttonDtime){
-            target.fzOld = target.fz;
-            Display.fillRect(120, COLUMN1+12+0*COLUM_DISTANCE-32, 50, 30, BackColor);
-            Display.setFont(F_A10); 
-            Display.setCursor(120,COLUMN1+12+0*COLUM_DISTANCE-32);Display.print("mm/min");
-        }
-        if (mystate.MPGkey != MPGkey) {
-            target.changed = true; 
-            mystate.MPGkey = MPGkey;
-        }            
-        //DEBUG("processMPGpress ok", MPGkey, mystate.buttontime);
-        if (abs(MPGkey) == 1) {         //90ms
-            mystate.jogS = 0.003;
-            mystate.jogF=0.2;
-            myoffset = 0;        
-        }else if (abs(MPGkey) == 2) {   //120ms
-            mystate.jogS = 0.002;
-            mystate.jogF=1;
-        }else if (abs(MPGkey) == 3) {   //120ms
-            mystate.jogS = 0.02;        
-            mystate.jogF=10.0;
-        }else if (abs(MPGkey) == 4) {   //120ms
-            mystate.jogS = 0.2;
-            mystate.jogF=100.0;         
-            if (target.changed)
-                twice = true;                         
-        }else if (abs(MPGkey) == 5) {   //120ms
-            mystate.jogS = 1.0;
-            mystate.jogF=500.0;
-            myoffset = -5;            
-            if (target.changed)
-                twice = true;                     
-        }else if (abs(MPGkey) == 6) {   //120ms
-            mystate.jogS = 4.0;
-            mystate.jogF=2000.0;
-            myoffset = -5;
-            if (target.changed)
-                twice = true; 
-        }                                           
-        mystate.buttonDtime = (unsigned long)(60.0/mystate.jogF * mystate.jogS *1000.0) + myoffset; 
-        target.fz = mystate.jogF;    
-        char* vz = (char*)"";
-        if (MPGkey < 0)
-            vz = (char*)"-";
-        sprintf(command, "$J=G91 Z%s%.3f F%.3f", vz, mystate.jogS, mystate.jogF);
-        serial_writeLn(command);
-        if (twice)
-            serial_writeLn(command);
-        mystate.buttontime = millis(); 
-    }else if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey== 0)){
-        serial_putC(CMD_STOP); 
-        serial0_writeLn("processMPGpress Stop");
-        Display.fillRect(120, COLUMN1+12+0*COLUM_DISTANCE-32, 50, 30, BackColor);
-        Display.setFont(F_A10); 
-        Display.setCursor(120,COLUMN1+12+0*COLUM_DISTANCE-32);Display.print("mm/U");
-        target.fz = target.fzOld;
-        mystate.MPGkey = MPGkey;
-        target.changed = true;               
-    }else if ((millis()-mystate.buttontime)>mystate.buttonDtime)
-        mystate.MPGkey = MPGkey;
-}
-
 void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
   // translate the values from MPG-handwheel to drive commands
   // is called when you operate the hand wheel
@@ -893,7 +854,18 @@ void processKeypress (int DROkey, int keydown, float rpm){
   // call from dro.c->DROProcessEvents 
     static char command[50];
     char *dbutton = (char*)"-1";
-    DEBUG("processKeypress state=", DROkey, mystate.grblState, mystate.state, Idle, Alarm, Run); 
+    DEBUG("processKeypress DROkey|grblState|state=", DROkey, mystate.grblState, mystate.state, "Codes for Idle|Alarm|Run",  Idle, Alarm, Run); 
+    mystate.rpm = rpm;
+    
+    // evaluate key in the deticated page:
+    mystate.DROkey = DROkey;
+    int execute_state = mystate.execute; 
+    mystate.execute = Ckeys;
+    dstate[mystate.state].function();
+    mystate.execute = execute_state;
+    DROkey = mystate.DROkey;
+    
+    // evaluate key for global function: 
     switch (mystate.grblState){
           case Run:       // = 2
               DEBUG("  Run");   
@@ -902,23 +874,6 @@ void processKeypress (int DROkey, int keydown, float rpm){
                   serial_putC(CMD_STOP);
               }
               break;      
-          case Idle:   // = 1
-              DEBUG("  Idle");
-              if (mystate.state == WDREHEN){
-                  if (DROkey == 0){                       // left button
-                      if (rpm == 0.0) {
-                          sprintf(command, "G94 F%.3f G90 G01 Z%.3f", target.fzmin, target.z);     // *100 ??
-                      }else{
-                          sprintf(command, "G95 F%.3f G90 G01 Z%.3f", target.fz, target.z);
-                      }
-                  }else if (DROkey == 1)              // right button
-                      sprintf(command, "G00 Z0");     // Verfahren im Eilgang auf 0 
-                  serial0_writeLn(command);
-                  serial_writeLn(command);
-                  break;
-              }else if (mystate.state == WALARM){
-                  DEBUG("processKeypress: case Idle: Alarm");
-              }
           case Alarm:  //=5
               DEBUG("  processKeypress: case Alarm");
               unsigned int msgindex=0;

@@ -179,7 +179,8 @@ typedef struct {
 typedef enum {
    Cinit,
    Crun,
-   Cend
+   Cend,
+   Ckeys
 } call_enum_t;
 
 typedef struct call {
