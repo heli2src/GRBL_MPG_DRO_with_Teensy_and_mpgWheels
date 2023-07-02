@@ -63,9 +63,9 @@ uint16_t TITLE_BACK = C_VALUES[36];
 
 // easy way to include fonts but change globally
 #define FONT_SMALL  Arial_16             // font for menus
-#define FONT_EDITTITLE  Arial_18_Bold    // font for menus
-#define FONT_ITEM   Arial_16             // font for menus
-#define FONT_TITLE  Arial_24_Bold        // font for all headings
+//#define FONT_EDITTITLE  Arial_18_Bold    // font for menus
+//#define FONT_ITEM   Arial_16             // font for menus
+//#define FONT_TITLE  Arial_24_Bold        // font for all headings
 
 typedef struct {
     short numstate;
@@ -203,6 +203,15 @@ void showPage(int ssize, struPage* ddisplay){
   Display.setFont(F_A24);
   for (byte index = 0; index < ssize; index++) {
       if (ddisplay[index].Typ[0] == 'T') {
+        switch (ddisplay[index].Typ[1]){
+          case '0':  Display.setFont(F_A24);
+                     break;
+          case '1':  Display.setFont(F_A14);
+                     break;
+          case '2':  Display.setFont(F_A10);
+                     break;                     
+          default:   Display.setFont(F_A10);
+        }   
         if (first) Display.fillRect(0, 0, 480, 38, C_DKBLUE);
         Display.setTextColor(ddisplay[index].TextColor);
         Display.setCursor(ddisplay[index].x , ddisplay[index].y );
@@ -300,11 +309,11 @@ void Dinit(void) {
    switch (mystate.execute) {
     case Cinit: {    
         struPage mytext[]= {
-           {  10,   10, C_WHITE, "T", "      --  (c) Heli2  --", 0}, // 0
-           { 110,   80, C_BLUE,  "T", "Elektronische",           0}, // 1
-           { 120,  120, C_BLUE,  "T", "Leitspindel",             0}, // 2            
-           { 130,  160, C_BLUE,  "T", "V0.13",                   0}, // 3
-           //{ 130,  160, C_BLUE,  "T", eeprom.Version,            0}, // 3
+           {  10,   10, C_WHITE, "T0", "      --  (c) Heli2  --", 0}, // 0
+           { 110,   80, C_BLUE,  "T1", "Elektronische",           0}, // 1
+           { 120,  110, C_BLUE,  "T1", "Leitspindel",             0}, // 2            
+           { 130,  140, C_BLUE,  "T1", "V0.14",                   0}, // 3
+           //{ 130,  160, C_BLUE, "T", eeprom.Version,            0}, // 3
         };
         DEBUG("   Dinit: Cinit");  
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
@@ -330,8 +339,8 @@ void Dmenue(void){
    switch (mystate.execute) {
     case Cinit: {
         struPage mytext []= {
-           { 100,   10, TextColor, "T", "Menue",                  0}, // 0
-           { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Aussendrehen  ",      WDREHEN},  // 1
+           { 100,                          10, TextColor, "T0","Menue",                 0},     // 0
+           { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Drehen        ",      WDREHEN},  // 1
            { 140, COLUMN1+11+1*COLUM_DISTANCE, TextColor, "B", "Default values",      WDEFAULT}, // 2           
            { 140, COLUMN1+11+2*COLUM_DISTANCE, TextColor, "B", "Home          ",      WHOME},    // 3
            { 140, COLUMN1+11+3*COLUM_DISTANCE, TextColor, "B", "Reset         ",      WRESET}    // 4           
@@ -375,31 +384,22 @@ void Adrehen(void) {              // Aussendrehen
    switch (mystate.execute) {
     case Cinit: {
         struPage mytext[]= {
-           { 50,                           7, TextColor, "T",  "Aussendrehen",      0}, // 0   
-           {130, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  "  00.000",        WNUM}, // 1   Button Fz:
-           {130, COLUMN1+12+1*COLUM_DISTANCE, TextColor, "B",  "  00.000",        WNUM}, // 2   Button X:
-           {130, COLUMN1+12+2*COLUM_DISTANCE, TextColor, "B",  " 000.000",        WNUM}, // 3   Button Z:
-           { 15, COLUMN1+12+1*COLUM_DISTANCE, TextColor, "Bk", "  0",         WAOFFSET}, // 4
-           { 15, COLUMN1+12+2*COLUM_DISTANCE, TextColor, "Bk", "  0",         WAOFFSET}, // 5
-           { 290,                         20, TextColor, "Bk", " M",           WMENUE}, // 6           
+           { 90,                           7, TextColor, "T0", "Drehen",             0}, // 0
+           { 35, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "F :",               0}, // 1
+           { 53, COLUMN1+0*COLUM_DISTANCE+15, TextColor, "T2",  "z",                 0}, // 1
+           {120, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2",  "mm/U",              0}, // 1
+           {195, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "U:",                0}, // 1  
+           { 40, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0",  "X:",                0}, // 1
+           { 40, COLUMN1+2*COLUM_DISTANCE,    TextColor, "T0",  "Z:",                0}, // 1                              
+           {130, COLUMN1+0*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 1   Button Fz:
+           {130, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 2   Button X:
+           {130, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "B",  " 000.000",        WNUM}, // 3   Button Z:
+           { 15, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 4
+           { 15, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 5
+           { 290,                         20, TextColor, "Bk", " M",           WMENUE},  // 6
         };
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
         Display.setTextColor(TextColor);
-        // Fz:
-        Display.setFont(F_A24);
-        Display.setCursor(35, COLUMN1); Display.print("F");
-        Display.setFont(F_A10);
-        Display.setCursor(53, COLUMN1+15); Display.print("z");
-        Display.setFont(F_A24);
-        Display.setCursor(61, COLUMN1);Display.print(":");
-        // mm/U
-        Display.setFont(F_A10); 
-        Display.setCursor(120,COLUMN1+12+0*COLUM_DISTANCE-32);Display.print("mm/U");
-        // U:
-        Display.setFont(F_A24);
-        Display.setCursor(195, COLUMN1); Display.print("U:");
-        Display.setCursor(40, COLUMN1+1*COLUM_DISTANCE);  Display.print("X:");
-        Display.setCursor(40, COLUMN1+2*COLUM_DISTANCE);  Display.print("Z:");
         target.changed = true;
         break;}
    case Crun:{              
@@ -625,32 +625,25 @@ void Ddefault(void) {              // set default values
    switch (mystate.execute) {
     case Cinit: {
         struPage mytext[]= {
-           { 30,                           7, TextColor, "T",  "Set default values",      0}, // 0   
-           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 500.000",        WNUM}      // 1   Button Fzmin:
-//           {140, COLUMN1+12+3*COLUM_DISTANCE, TextColor, "B",  " Return ",        WMENUE}     // 2   Button return
+           { 30,                           7, TextColor, "T0", "Set default values",    0}, // 0
+           { 40, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0", "F :",                   0}, // 1
+           { 60, COLUMN1+0*COLUM_DISTANCE+15, TextColor, "T2", "z",                     0}, // 2           
+           {210, COLUMN1+0*COLUM_DISTANCE+5,  TextColor, "T1", "mm/min",                0}, // 3
+           { 40, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0", "F :",                   0}, // 4   
+           {210, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T1", "mm/U",                  0}, // 5                     
+           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 000.000",           WNUM}, // 6   Button Fzmin:
+           {140, COLUMN1+12+1*COLUM_DISTANCE, TextColor, "B",  " ???.000",           WNUM}  // 7   Button Fz default:           
         };
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
-        Display.setTextColor(TextColor);
-        // Fz:
-        Display.setFont(F_A24);
-        Display.setCursor(40, COLUMN1); Display.print("F");
-        Display.setFont(F_A10);
-        Display.setCursor(58, COLUMN1+15); Display.print("z");
-        Display.setFont(F_A24);
-        Display.setCursor(66, COLUMN1);Display.print(":");
-        // mm/min
-        Display.setFont(F_A10); 
-        Display.setCursor(210,COLUMN1+12+0*COLUM_DISTANCE);Display.print("mm/min");
         target.changed = true;
         showMessageButtons("","ok");
         break;}
      case Crun: {
         if (target.changed) {
-            DEBUG("   Ddefault Crun", target.fzmin);
-            sprintf(buffer10, "%.3f", target.fzmin);
-            Buttons[0].setText(buffer10);
+            sprintf(buffer10, "%.3f", target.fzmin); Buttons[0].setText(buffer10);
+            sprintf(buffer10, "%.3f", eeprom.fzU);   Buttons[1].setText(buffer10);
             target.changed = false;
-            Buttons[0].show();            
+            Buttons[0].show();
         }
         break;}
   case Cend: {
@@ -709,7 +702,7 @@ void MyDisplay_init(void) {
     }
     mystate.execute = Cinit;
     target.fzmin = eeprom.fzmin;
-    target.fz = 0.2;
+    target.fz = eeprom.fzU;
     target.x = 0.0;
     target.y = 0.0;    
     target.z = 0.0;    
@@ -831,18 +824,10 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
         mystate.mpgtime[index] = time;   
         // 
         // todo:  for better and smoother driving evaluate MPGdtime (it is the time beetween 2 handwheel pulses)
-        float mul = 100.0;
-        if (abs(MPGcnt) < 5) speed = mul;
-        else if (abs(MPGcnt) < 20) speed = mul*20;
-        else speed = mul * 50;
-        //if (MPGswitch == 0) {
+        if (abs(MPGcnt) < 5) speed = eeprom.fzjog001;
+        else if (abs(MPGcnt) < 20) speed = eeprom.fzjog01;
+        else speed = eeprom.fzjog1;
         //  speed = 600.0 * float(abs(MPGcnt)) / float(dtime);        // 60*1000 MPGcnt *0.01 / (millis() - oldmillis)  				= mm/min
-        //  if (speed < 1.00)
-        //    speed = 1.00;
-        //}else if (MPGswitch == 1) 
-        //  speed = target.fz*10;
-        //else
-        //  speed = target.fz*100;
         sprintf(command, "$J=G91 %c%.3f F%.1f", MPGkey, float(MPGcnt)*0.01, speed);   //e.q. $J=G91 Z1.000 F100.0   G91 = relative movement 
         serial_writeLn(command);
         DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, command);      
