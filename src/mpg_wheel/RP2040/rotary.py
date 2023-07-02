@@ -10,10 +10,11 @@ class Rotary:
 #    ROT_CCW = 2
 #    SW_PRESS = 4
 #    SW_RELEASE = 8
+    debounceThreshold = 700
     
     def __init__(self, dt, clk, sw):
-        self.dt_pin = Pin(dt, Pin.IN)
-        self.clk_pin = Pin(clk, Pin.IN)
+        self.dt_pin = Pin(dt, Pin.IN, Pin.PULL_UP)
+        self.clk_pin = Pin(clk, Pin.IN, Pin.PULL_UP)
         self.sw_pin = Pin(sw, Pin.IN, Pin.PULL_UP)
         self.last_status = (self.dt_pin.value() << 1) | self.clk_pin.value()
         self.dt_pin.irq(handler=self.rotary_change, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
@@ -22,6 +23,7 @@ class Rotary:
         self.handlers = []
         self.last_button_status = self.sw_pin.value()
         self.lasttime = utime.ticks_us()
+        self.debounceLast = 0
         self.buttontime = 0
         self.arg = array.array('i',[0, 0, 1])
         self.increment = 1
@@ -31,6 +33,9 @@ class Rotary:
         self._enable = value
         
     def rotary_change(self, pin):
+        if utime.ticks_us() - self.debounceLast < self.debounceThreshold:
+            return
+        self.debounceLast = utime.ticks_us()
         new_status = (self.dt_pin.value() << 1) | self.clk_pin.value()
         if new_status == self.last_status:
             return
