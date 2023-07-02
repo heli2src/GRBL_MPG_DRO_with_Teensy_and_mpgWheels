@@ -484,7 +484,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
         if (mystate.error > 0){
             msgindex = mystate.error;
             if (mystate.error > int(sizeof(errorcodes)/sizeof(structAlarmcodes))){
-                DEBUG("Dalarm: Error to high, set to 0", msgindex);
+                DEBUG("       Error to high, set to 0", msgindex);
                 msgindex = 0;
             }
             msg = errorcodes[msgindex].msg;
@@ -493,15 +493,15 @@ void Dalarm(void) {              // Widget for alarm + error messages
         }else if (mystate.alarm > 0){ 
             msgindex = mystate.alarm;
             if (mystate.alarm > int(sizeof(alarmcodes)/sizeof(structAlarmcodes))){
-                DEBUG("Dalarm: Alarm to high, set to 0", msgindex);
+                DEBUG("        Alarm to high, set to 0", msgindex);
                 msgindex = 0;
             }
             msg = alarmcodes[msgindex].msg;
             buttonL = alarmcodes[msgindex].buttonL;
             buttonR = alarmcodes[msgindex].buttonR;            
         }
-        DEBUG("Dalarm: state= ", mystate.grblState, mystate.prevstate, msgindex, msg);
-        for (unsigned int i=0;i<strlen(msg)+1; i++){
+        DEBUG("        state= ", mystate.grblState, mystate.prevstate, msgindex, msg);
+        for (unsigned int i=0;i<strlen(msg)+1; i++){            // display the alam/error code
              line[cnt] = msg[i];
              cnt++;
              if (line[cnt-1] == '\n'){
@@ -522,12 +522,65 @@ void Dalarm(void) {              // Widget for alarm + error messages
         break;
     }
     case Cend: {
-        DEBUG("   Dalarm: Cend", mystate.bindex, input.fvalue, mystate.state, mystate.oldstate, mystate.prevstate,);
+        DEBUG("   Dalarm: Cend bindex|fvalue|state|oldstate|prevstate", mystate.bindex, input.fvalue, mystate.state, mystate.oldstate, mystate.prevstate,);
+        DEBUG("         Alarm=", mystate.alarm, "Error=", mystate.error);
         mystate.state = mystate.prevstate;
         break;}
     case Ckeys:{
           DEBUG("   Dalarm Ckeys", mystate.DROkey); 
+          unsigned int msgindex=0;
+          char *buttonL = alarmcodes[0].buttonL;
+          char *buttonR = alarmcodes[0].buttonR;
+          char *dbutton = (char*)"-1";          
+          if (mystate.error >0) {
+              msgindex=mystate.error;
+              if (msgindex > sizeof(errorcodes)/sizeof(structAlarmcodes)){
+                  DEBUG("         error value to high -> set to 0", msgindex);
+                  msgindex = 0;
+              }
+              buttonL = errorcodes[msgindex].buttonL;
+              buttonR = errorcodes[msgindex].buttonR;
+              DEBUG("         Error:", msgindex, "Buttons", buttonL, buttonR);                  
+          }else if (mystate.alarm >0) {
+              msgindex=mystate.alarm;
+              if (msgindex > sizeof(alarmcodes)/sizeof(structAlarmcodes)){
+                  DEBUG("         alarm value to high -> set to 0", msgindex);
+                  msgindex = 0;
+              }
+              buttonL = alarmcodes[msgindex].buttonL;
+              buttonR = alarmcodes[msgindex].buttonR;
+              DEBUG("         Alarm:", msgindex, "Buttons", buttonL, buttonR);   
+          }
+          DEBUG("         index=", msgindex);
+          if (mystate.DROkey==0)
+              dbutton = buttonL;
+          else if (mystate.DROkey == 1) 
+              dbutton = buttonR;
+          DEBUG("         Button=", dbutton);
+          if (strlen(dbutton)>0){
+              if (strcmp(dbutton, "Home")==0){
+                  DEBUG("        do: Home");
+                  serial_putC(24);
+                  sprintf(buffer10, "$X ");                 // unlock
+                  serial0_writeLn(buffer10);
+                  sprintf(buffer10, "$H");
+              }else if (strcmp(dbutton, "Reset")==0) {
+                  DEBUG("        do: Reset");
+                  serial_putC(24);                        //Reset send #24
+              }else if (strcmp(dbutton, "ok")==0) {
+                  DEBUG("        do: ok");
+                  serial_putC(24);                         //Reset send #24 
+                  sprintf(buffer10, "$X");                 // unlock                      
+              }else if (strcmp(dbutton, "Unlock")==0) {
+                  DEBUG("        do: Unlock");
+                  serial_putC(24);                         //Reset send #24
+                  sprintf(buffer10, "$X");                 // unlock
+              }
+              serial0_writeLn(buffer10);
+              serial_writeLn(buffer10);
+              delay(200);
         break;}
+       }
    }
 }
 
@@ -812,8 +865,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
     int index = int(MPGkey-'X'); 
     // DEBUG("processMpg", MPGkey, MPGcnt, MPGdtime);
     char buffer50[50];
-    sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGdtime);
-    debugDisplay(buffer50);
+    // sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGdtime); debugDisplay(buffer50);
     if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey!= 0))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging
         // DEBUG(mystate.grblState, Idle, Jog, mystate.state, MPGkey);
         
@@ -859,7 +911,7 @@ void processKeypress (int DROkey, int keydown, float rpm){
                   serial_putC(CMD_STOP);
               }
               break;      
-          case Alarm:  //=5
+/*          case Alarm:  //=5
               DEBUG("  processKeypress: case Alarm");
               unsigned int msgindex=0;
               char *buttonL = alarmcodes[0].buttonL;
@@ -913,5 +965,6 @@ void processKeypress (int DROkey, int keydown, float rpm){
                   delay(200);
               }
               break;
+              */
     }
 }
