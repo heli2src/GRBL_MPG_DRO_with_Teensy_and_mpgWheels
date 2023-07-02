@@ -7,5 +7,9 @@ struct EEPROMs                      // see https://www.arduino.cc/en/Reference/E
     uint8_t        BGred;            // Background red
     uint8_t        BGgreen;          // Background green
     uint8_t        BGblue;           // Background blue 
-    float          fzmin;            // mm/min 
+    float          fzmin;            // mm/min if spindle isn't running
+    float          fzU;              // mm/U default value if spindle is running
+    float          fzjog001;         // mm/min if jogging with 0.01 mm/step
+    float          fzjog01;          // mm/min if jogging with 0.1 mm/step   
+    float          fzjog1;           // mm/min if jogging with 1mm/step
 } eeprom;
