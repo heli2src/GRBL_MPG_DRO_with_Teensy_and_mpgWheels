@@ -52,8 +52,12 @@ void MPGPollSerial(void){
              int dtime = int(mpg_data.block[5] << 8) + int(mpg_data.block[6]);             
              if (mpg > 32768) mpg= mpg-65536;
              if (mpg != mpg_data.z) {
-               DROmpgEvent(true, 'Z', mpg-mpg_data.z, dtime);          
-               mpg_data.z = mpg;
+               if (mpg == 0 and abs(mpg-mpg_data.z) > 2)       // mpgwheel get a reset or power off/on
+                   mpg_data.z = 0;
+               else {
+                   DROmpgEvent(true, 'Z', mpg-mpg_data.z, dtime);          
+                   mpg_data.z = mpg;
+               }
              }        
           }else{
             DEBUG("MPGPollSerial crc error");
