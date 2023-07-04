@@ -6,7 +6,7 @@ Handwheel with Encoder + Rasperry Pi Pico Zero
    
    
    0.01/0.1/1mm switch     -> GP22, Pin 29      switch to gnd   GP13
-   disalbe/jogging/control -> GP21, Pin 27      switch to gnd   GP14
+   disable/jogging/control -> GP21, Pin 27      switch to gnd   GP14
    
    RS485           DI  (4) -> GP0 (TX0) Pin1
                    DE  (3) -> VDD          Transceiver Output Enable
@@ -32,11 +32,12 @@ Handwheel with Encoder + Rasperry Pi Pico Zero
 '''
 import utime
 import micropython
-from machine import Pin, I2C, Timer, freq as CPUfreq
+from machine import Pin, I2C, Timer, WDT, freq as CPUfreq
 from rotary import Rotary
 from ssd1306 import SSD1306_I2C
 from modbus import Modbus
 import framebuf
+from ws2812 import ws2812
 
 # GPIOs Rotary Encoder
 PIN_DT = 10
@@ -64,10 +65,15 @@ class cnc_axis():
     def __init__(self, pin_dt, pin_clk, pin_sw1, pin_sw2, pin_sw3, pin_sw4, pin_i2cclk, pin_i2cdt):
         micropython.opt_level(3)
         # micropython.alloc_emergency_exception_buf(100)
-        CPUfreq(200_000_000)
-
-        self.led = Pin(25, Pin.OUT)
-        self.led.value(0)
+        CPUfreq(125_000_000)
+        
+        if ws2812:
+            self.led = ws2812(16)
+            self.led.on()
+        else:            
+            self.led = Pin(25, Pin.OUT)
+            self.led.value(0)
+        
         self.debug = True
 
         # init display
@@ -90,7 +96,7 @@ class cnc_axis():
                                         # > 10: >4s switch to changing axis
         self.displayChange = True
         self.buttontime = 0
-        self.axis = 2            # todo: read from eeprom
+        self.axis = 2            # todo: read from eeprom    
 
         self.rotary = Rotary(pin_dt, pin_clk, pin_sw2)                    # Init Rotary Encoder
         self.rotary.add_handler(self.rotary_changed)
@@ -122,6 +128,7 @@ class cnc_axis():
             self.display.show()                    # ~50760us,   interrupt form rotary will blocked :-(
             utime.sleep_ms(500)
         utime.sleep_ms(500)
+        self.wdt = WDT(timeout=1000)  # enable Watchdog, with a timeout of 1s        
 
     def sw_irq(self, pin):
         value = pin.value()
@@ -185,6 +192,7 @@ class cnc_axis():
         if utime.ticks_us() - self.lasttime > 500:
             self.lasttime = utime.ticks_us()
             result = self.client.receive()
+            # result = None
             if result is None:
                 self.noConnectionTime += 1
                 if 5000 > self.noConnectionTime > 4000 or self.noConnectionTime < 0:
@@ -205,6 +213,7 @@ class cnc_axis():
         if utime.ticks_us() - self.led_lasttime > 500000:
             self.led.toggle()
             self.led_lasttime = utime.ticks_us()
+            self.wdt.feed()
         #utime.sleep_ms(50)
             
     def dprint(self, msg):
