@@ -24,7 +24,6 @@ Handwheel with Encoder + Rasperry Pi Pico Zero
     
     todo:
        - self.axis should get from the eeprom lib (emulated)
-       - slaveaddress=3 is fix, should depend from axis.
        - use dma for the data from SSD1306
        - display values from the axis
        - control mode only dummy yet
@@ -96,7 +95,7 @@ class cnc_axis():
                                         # > 10: >4s switch to changing axis
         self.displayChange = True
         self.buttontime = 0
-        self.axis = 2            # todo: read from eeprom    
+        self.axis = 0            # todo: read from eeprom    
 
         self.rotary = Rotary(pin_dt, pin_clk, pin_sw2)                    # Init Rotary Encoder
         self.rotary.add_handler(self.rotary_changed)
@@ -105,7 +104,7 @@ class cnc_axis():
         sw3 = Pin(pin_sw3, Pin.IN, Pin.PULL_UP)
         sw3.irq(handler=self.sw_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
 
-        self.client = Modbus(port=0, slaveaddress=3, baudrate=38400)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
+        self.client = Modbus(port=0, slaveaddress=self.axis+1, baudrate=38400, debug=False)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
                                                                          # should be einstellbar über EEPROM ?!
         # self.client.debug = True
         self.client.regMemory = self.regMemory
@@ -122,11 +121,11 @@ class cnc_axis():
         self.display.fill(0)				          # ~865us
         # Blit the image from the framebuffer to the oled display
         self.display.blit(fb, 96, 18)
-				   
-        for y in range(10, 60, 10):
-            self.display.text("Heli2", y, y)       # ~310us
-            self.display.show()                    # ~50760us,   interrupt form rotary will blocked :-(
+        self.display.text("Heli2    V0.2", 10, 10)
+        for y in range(20, 60, 10):
+            self.display.show() 		               # ~50760us,   interrupt form rotary will blocked :-(
             utime.sleep_ms(500)
+            self.display.text("Heli2", y, y)       # ~310us
         utime.sleep_ms(500)
         self.wdt = WDT(timeout=1000)  # enable Watchdog, with a timeout of 1s        
 

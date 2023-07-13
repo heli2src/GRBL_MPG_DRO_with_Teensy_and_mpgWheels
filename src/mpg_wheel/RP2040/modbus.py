@@ -183,7 +183,7 @@ class Modbus:
     def receive(self):
         rxData = self.rxChar()
         if rxData is not None:
-            self.dprint(rxData)
+            self.dprint(f'{self.count}: {rxData}')
             self.rxbuffer += rxData
             self.count += 1
             if utime.ticks_us()-self._latest_read_times>self.timeout_time:    #new frame start
@@ -193,6 +193,8 @@ class Modbus:
                     self.rw = 0
                 else:
                     self.rw = 1
+            elif self.count == 1:                    #wrong adress, wait till timeout
+                self.count = -20
             elif self.rw==1 and self.count ==8 and self.rxbuffer[1]==3:
                 if self._calculate_crc_string(self.rxbuffer) == 0:
                     regaddr = int(self.rxbuffer[2]<<8) + int(self.rxbuffer[3])

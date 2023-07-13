@@ -114,7 +114,7 @@ class PCmodbusServer(object):
 if __name__ == '__main__':
     # root = tk.Tk()
     # server=modbusserver(root,tk)
-    server = PCmodbusServer('COM16,3')
+    server = PCmodbusServer('COM16, 1')
     # server.mb.debug = True
  #   server.write('axis', ord('X'))
     oldcnt = -1
@@ -132,6 +132,7 @@ if __name__ == '__main__':
             else:
                 diff = result
             sleep(0.05)
+            #sleep(2.0)
         if oldcnt != cnt:
             print(f'cnt={cnt}')  # , diff)
             oldcnt = cnt
