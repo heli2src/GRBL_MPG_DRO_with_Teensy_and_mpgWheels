@@ -862,9 +862,10 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
   // translate the values from MPG-handwheel to drive commands
   // is called when you operate the hand wheel
   // MPGkey = X,Y,Z
+  DEBUG("processMpg", MPGkey);
     int index = int(MPGkey-'X'); 
     // DEBUG("processMpg", MPGkey, MPGcnt, MPGdtime);
-    char buffer50[50];
+    // char buffer50[50];
     // sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGdtime); debugDisplay(buffer50);
     if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey!= 0))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging
         // DEBUG(mystate.grblState, Idle, Jog, mystate.state, MPGkey);
@@ -888,9 +889,8 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
 
 
 void processKeypress (int DROkey, int keydown, float rpm){
-  // call from dro.c->DROProcessEvents 
-    static char command[50];
-    char *dbutton = (char*)"-1";
+    // call from dro.c->DROProcessEvents 
+    //char *dbutton = (char*)"-1";
     DEBUG("processKeypress DROkey|grblState|state=", DROkey, mystate.grblState, mystate.state, "Codes for Idle|Alarm|Run",  Idle, Alarm, Run); 
     mystate.rpm = rpm;
     
@@ -910,61 +910,6 @@ void processKeypress (int DROkey, int keydown, float rpm){
                   DEBUG("Stop");       
                   serial_putC(CMD_STOP);
               }
-              break;      
-/*          case Alarm:  //=5
-              DEBUG("  processKeypress: case Alarm");
-              unsigned int msgindex=0;
-              char *buttonL = alarmcodes[0].buttonL;
-              char *buttonR = alarmcodes[0].buttonR;
-              if (mystate.error >0) {
-                  msgindex=mystate.error;
-                  if (msgindex > sizeof(errorcodes)/sizeof(structAlarmcodes)){
-                      DEBUG("processKeypress error value to high -> set to 0", msgindex);
-                      msgindex = 0;
-                  }
-                  buttonL = errorcodes[msgindex].buttonL;
-                  buttonR = errorcodes[msgindex].buttonR;
-                  DEBUG("processKeypress Error:", msgindex, "Buttons", buttonL, buttonR);                  
-              }else if (mystate.alarm >0) {
-                  msgindex=mystate.alarm;
-                  if (msgindex > sizeof(alarmcodes)/sizeof(structAlarmcodes)){
-                      DEBUG("processKeypress alarm value to high -> set to 0", msgindex);
-                      msgindex = 0;
-                  }
-                  buttonL = alarmcodes[msgindex].buttonL;
-                  buttonR = alarmcodes[msgindex].buttonR;
-                  DEBUG("processKeypress Alarm:", msgindex, "Buttons", buttonL, buttonR);   
-              }
-              DEBUG("processKeypress index=", msgindex);
-              if (DROkey==0)
-                  dbutton = buttonL;
-              else if (DROkey == 1) 
-                  dbutton = buttonR;
-              DEBUG("processKeypress Button=", dbutton);
-              if (strlen(dbutton)>0){
-                  if (strcmp(dbutton, "Home")==0){
-                      DEBUG("processKeypress Home");
-                      serial_putC(24);
-                      sprintf(buffer10, "$X ");                 // unlock
-                      serial0_writeLn(buffer10);
-                      sprintf(buffer10, "$H");
-                  }else if (strcmp(dbutton, "Reset")==0) {
-                      DEBUG("processKeypress Reset");
-                      serial_putC(24);                        //Reset send #24
-                  }else if (strcmp(dbutton, "ok")==0) {
-                      DEBUG("processKeypress ok");
-                      serial_putC(24);                         //Reset send #24 
-                      sprintf(buffer10, "$X");                 // unlock                      
-                  }else if (strcmp(dbutton, "Unlock")==0) {
-                      DEBUG("processKeypress Unlock");
-                      serial_putC(24);                         //Reset send #24
-                      sprintf(buffer10, "$X");                 // unlock
-                  }
-                  serial0_writeLn(buffer10);
-                  serial_writeLn(buffer10);
-                  delay(200);
-              }
               break;
-              */
     }
 }

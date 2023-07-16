@@ -36,7 +36,6 @@ void Switch_mode(int mode){
 }
 
 void Switch_loop(void){
-    int value;
     buttons.update();
     if (switchmode ==0){  
         if (buttons.fell(0))
