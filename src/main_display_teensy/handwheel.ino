@@ -3,14 +3,15 @@
 // modbus https://forum.pjrc.com/threads/37018-Modbus-RTU/page2?s=0b70591297bc806d553c15a620b15758
 // https://www.pjrc.com/teensy/td_uart.html
 
-
+char usedAxis[] = {'X', 'Z'};
+byte paxis = 0x01;
+bool busy = false;
 byte readMpg[] = { 0x03, 0x03, 0x00, 0x00, 0x00, 0x02};      //, 0x85, 0xE8};       // Modbus protocoll
 //                  |slave ID, must be changed for each achse
 //                        |---0x03 = function code:  read Multiple Holding Registers (16-bit)
 //                               | Start Adress msb/lsb
 //                                          | Quantity of registers msb/lsb
 //                                                                | CRC msb/lsb
-unsigned long timeout = 6;
 
 void MPG_init(void) {
 //RS485SERIAL.setTX(8);
@@ -30,40 +31,58 @@ uint _calculate_crc_string(char* buffer, uint length){
 }
 
 void MPGPollSerial(void){
-    if (RS485SERIAL.availableForWrite()) {
-      for(unsigned int i = 0; i<sizeof(readMpg); i++)
-          RS485SERIAL.write(readMpg[i]);
-      uint crc = _calculate_crc_string(readMpg, 6);       
-      RS485SERIAL.write(crc & 0x00FF);          // lsb
-      RS485SERIAL.write((crc & 0xFF00) >>8);    // msb    
-    }
     if (RS485SERIAL.available()){
-      mpg_data.counter = 0;      
+      mpg_data.counter = 0;
       while (RS485SERIAL.available()){
         char c = RS485SERIAL.read();             //receive b'\x03\x03\x02\x00\x00\xc1\x84'
         if(mpg_data.counter < MPG_BLOCK_LENGTH - 1)
           mpg_data.block[mpg_data.counter++] = c;    
       }
       mpg_data.latest_read_time = millis();
-      if (mpg_data.counter == 9 &&  mpg_data.block[0] == readMpg[0] && mpg_data.block[1] == readMpg[1] && mpg_data.block[2] == 4) {
+      if (mpg_data.counter == 9 && mpg_data.block[1] == readMpg[1] && mpg_data.block[2] == 4) {  
+          DEBUG("read", int(mpg_data.block[0]), millis());      
           uint result = _calculate_crc_string(mpg_data.block, mpg_data.counter);
-          if (result == 0){    
-             int mpg = int(mpg_data.block[3] << 8) + int(mpg_data.block[4]);
+          if (result == 0 &&  (mpg_data.block[0] >= 0) &&  (mpg_data.block[0] <=4)){    
+             int mpgValue = int(mpg_data.block[3] << 8) + int(mpg_data.block[4]);
              int dtime = int(mpg_data.block[5] << 8) + int(mpg_data.block[6]);             
-             if (mpg > 32768) mpg= mpg-65536;
-             if (mpg != mpg_data.z) {
-               if (mpg == 0 and abs(mpg-mpg_data.z) > 2)       // mpgwheel get a reset or power off/on
-                   mpg_data.z = 0;
-               else {
-                   DROmpgEvent(true, 'Z', mpg-mpg_data.z, dtime);          
-                   mpg_data.z = mpg;
+             if (mpgValue > 32768) mpgValue= mpgValue-65536;
+             int *mpgData=0;
+             switch (mpg_data.block[0]){
+                case 1: mpgData = &mpg_data.z;break;
+                case 2: mpgData = &mpg_data.y;break;
+                case 3: mpgData = &mpg_data.z;break;
+                //case 4: mpgData = &mpg_data.a;break;                     
+             }             
+             if (mpgValue != *mpgData) {
+               if (mpgValue == 0 and (abs(mpgValue-*mpgData) > 2))       // mpgwheel get a reset or power off/on, but also 0 cnt :-(
+                   *mpgData = 0;
+               else{
+                   DROmpgEvent(true, mpg_data.block[0]+'X'-1, mpgValue-*mpgData, dtime);          
+                   *mpgData = mpgValue;
                }
-             }        
+             }
+             DEBUG("axis = ", int(mpg_data.block[0]), "cnt =", mpgValue);              
           }else{
-            DEBUG("MPGPollSerial crc error");
+             mpg_data.counter = 0;
+             DEBUG("MPGPollSerial crc error, result", result, "mpg_data.block[0]", int(mpg_data.block[0]), "axis", int(readMpg[0]));
           }
+          busy = false;
       }
     }else if (mpg_data.latest_read_time-millis() > timeout) {
       mpg_data.counter = 0;
+      busy = false;
+    }
+    if (!busy && RS485SERIAL.availableForWrite()) {
+      readMpg[0] = usedAxis[paxis] - 'X' +1;
+      DEBUG("write", readMpg[0], millis());
+      for(unsigned int i = 0; i<sizeof(readMpg); i++)
+          RS485SERIAL.write(readMpg[i]);
+      uint crc = _calculate_crc_string(readMpg, 6);       
+      RS485SERIAL.write(crc & 0x00FF);          // lsb
+      RS485SERIAL.write((crc & 0xFF00) >>8);    // msb
+      paxis++;
+      if (paxis > sizeof(usedAxis)-1) paxis = 0;
+      busy = true;
+      mpg_data.latest_read_time = millis();
     }
 }
