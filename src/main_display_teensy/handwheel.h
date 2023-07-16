@@ -1,14 +1,18 @@
 #define RS485SERIAL Serial3
 #define MPG_BLOCK_LENGTH 10
 
+unsigned long timeout = 6;
+
 typedef struct {
     uint counter = 0;
     int x;
     int y;
     int z;
+    int a;    
     int x_switch;
     int y_switch;
-    int z_switch;    
+    int z_switch;
+    int a_switch;     
     char block[MPG_BLOCK_LENGTH];
     unsigned long latest_read_time;
 } mpg_data_t;
