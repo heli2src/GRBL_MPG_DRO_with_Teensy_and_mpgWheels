@@ -862,9 +862,8 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
   // translate the values from MPG-handwheel to drive commands
   // is called when you operate the hand wheel
   // MPGkey = X,Y,Z
-  DEBUG("processMpg", MPGkey);
     int index = int(MPGkey-'X'); 
-    // DEBUG("processMpg", MPGkey, MPGcnt, MPGdtime);
+    //DEBUG("processMpg", MPGkey, MPGcnt, MPGdtime);
     // char buffer50[50];
     // sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGdtime); debugDisplay(buffer50);
     if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey!= 0))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging

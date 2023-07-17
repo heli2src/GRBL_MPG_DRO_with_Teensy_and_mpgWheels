@@ -31,6 +31,7 @@ uint _calculate_crc_string(char* buffer, uint length){
 }
 
 void MPGPollSerial(void){
+  int *mpgData;
     if (RS485SERIAL.available()){
       mpg_data.counter = 0;
       while (RS485SERIAL.available()){
@@ -39,29 +40,29 @@ void MPGPollSerial(void){
           mpg_data.block[mpg_data.counter++] = c;    
       }
       mpg_data.latest_read_time = millis();
-      if (mpg_data.counter == 9 && mpg_data.block[1] == readMpg[1] && mpg_data.block[2] == 4) {  
-          DEBUG("read", int(mpg_data.block[0]), millis());      
+      if (mpg_data.counter == 9 && mpg_data.block[1] == readMpg[1] && mpg_data.block[2] == 4) {     
           uint result = _calculate_crc_string(mpg_data.block, mpg_data.counter);
           if (result == 0 &&  (mpg_data.block[0] >= 0) &&  (mpg_data.block[0] <=4)){    
              int mpgValue = int(mpg_data.block[3] << 8) + int(mpg_data.block[4]);
              int dtime = int(mpg_data.block[5] << 8) + int(mpg_data.block[6]);             
              if (mpgValue > 32768) mpgValue= mpgValue-65536;
-             int *mpgData=0;
+             //DEBUG("read", int(mpg_data.block[0]), mpgValue, millis());   
              switch (mpg_data.block[0]){
-                case 1: mpgData = &mpg_data.z;break;
+                case 1: mpgData = &mpg_data.x;break;
                 case 2: mpgData = &mpg_data.y;break;
                 case 3: mpgData = &mpg_data.z;break;
-                //case 4: mpgData = &mpg_data.a;break;                     
-             }             
+                //case 4: mpgData = &mpg_data.a;break;                 
+                default: *mpgData = 0;
+             }
              if (mpgValue != *mpgData) {
                if (mpgValue == 0 and (abs(mpgValue-*mpgData) > 2))       // mpgwheel get a reset or power off/on, but also 0 cnt :-(
                    *mpgData = 0;
                else{
-                   DROmpgEvent(true, mpg_data.block[0]+'X'-1, mpgValue-*mpgData, dtime);          
+                   //DEBUG("call DROmpgEvent: axis = ", int(mpg_data.block[0]), "cnt =", mpgValue, *mpgData); 
+                   DROmpgEvent(true, mpg_data.block[0]+'X'-1, mpgValue-(*mpgData), dtime);          
                    *mpgData = mpgValue;
                }
-             }
-             DEBUG("axis = ", int(mpg_data.block[0]), "cnt =", mpgValue);              
+             }             
           }else{
              mpg_data.counter = 0;
              DEBUG("MPGPollSerial crc error, result", result, "mpg_data.block[0]", int(mpg_data.block[0]), "axis", int(readMpg[0]));
@@ -69,12 +70,13 @@ void MPGPollSerial(void){
           busy = false;
       }
     }else if (mpg_data.latest_read_time-millis() > timeout) {
+      DEBUG("Missing", readMpg[0], millis());
       mpg_data.counter = 0;
       busy = false;
     }
     if (!busy && RS485SERIAL.availableForWrite()) {
       readMpg[0] = usedAxis[paxis] - 'X' +1;
-      DEBUG("write", readMpg[0], millis());
+      // DEBUG("write", readMpg[0], millis());
       for(unsigned int i = 0; i<sizeof(readMpg); i++)
           RS485SERIAL.write(readMpg[i]);
       uint crc = _calculate_crc_string(readMpg, 6);       
