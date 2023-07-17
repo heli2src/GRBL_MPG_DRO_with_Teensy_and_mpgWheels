@@ -111,11 +111,12 @@ class Modbus:
             self._print_debug("Serial port {} already exists".format(port))
             self.serial = _serialports[port]
         self._latest_read_times = 0
-        self.timeout_time = int(1750 * 3.5 )
+        self.timeout_time = int(1/baudrate*3.5*11*1000*1000) if baudrate <= 19200 else 1750
         self.count = 0
         self.rw = 1
         self.regMemory = []
         self.rxbuffer = bytes()
+        self.validAddr = True
             
     def _print_debug(self, text):
         if self.debug:
@@ -182,33 +183,29 @@ class Modbus:
     
     def receive(self):
         rxData = self.rxChar()
-        if rxData is not None:
-            self.dprint(f'{self.count}: {rxData}')
+        while rxData is not None:
             self.rxbuffer += rxData
             self.count += 1
-            if utime.ticks_us()-self._latest_read_times>self.timeout_time:    #new frame start
-                self.count = 0
-            elif self.count==1 and self.rxbuffer[0] == self.address:
-                if rxData > b'\x04':
-                    self.rw = 0
-                else:
-                    self.rw = 1
-            elif self.count == 1:                    #wrong adress, wait till timeout
-                self.count = -20
-            elif self.rw==1 and self.count ==8 and self.rxbuffer[1]==3:
-                if self._calculate_crc_string(self.rxbuffer) == 0:
-                    regaddr = int(self.rxbuffer[2]<<8) + int(self.rxbuffer[3])
-                    regcnt = int(self.rxbuffer[4]<<8) + int(self.rxbuffer[5])
-                    return self.send_dat(regaddr, regcnt)
-                else:
-                    self.error = _errortype[0]
-                    print(self.error)
-            elif self.rw==0 and self.count > 9:
-                self.dprint(f'{self.__class__.__name__}.write {self.rxbuffer} not implemented yet')
-        elif utime.ticks_us()-self._latest_read_times>self.timeout_time:          
-            self.rxbuffer = bytes()
+            rxData = self.rxChar()
+        if self.count == 8 and self.rxbuffer[0] == self.address and self.rxbuffer[1]< 5 and self.rxbuffer[1]==3:  # read 16-bit register
+            if self._calculate_crc_string(self.rxbuffer) == 0:
+                regaddr = int(self.rxbuffer[2]<<8) + int(self.rxbuffer[3])
+                regcnt = int(self.rxbuffer[4]<<8) + int(self.rxbuffer[5])
+                result = self.send_dat(regaddr, regcnt)
+            else:
+                self.error = _errortype[0]
+                print(self.error)
+                result = None
+            self.rxbuffer = bytes()                
             self.count = 0
-            # self.dprint(f'{self.__class__.__name__}.receive: timeout > {self.timeout_time}')
+            return result
+        elif self.count > 9 and self.rxbuffer[1]> 4 and self.rxbuffer[0] == self.address:  # write 16-bit register
+            self.dprint(f'{self.__class__.__name__}.write {self.rxbuffer} not implemented yet')
+        elif utime.ticks_us()-self._latest_read_times>self.timeout_time:          
+            if self.count > 0:
+                self.dprint(f'{self.__class__.__name__}.receive: timeout > {self.timeout_time}, {self.count}: {self.rxbuffer}')
+            self.rxbuffer = bytes()                
+            self.count = 0        
         return None
                 
     def send_dat(self, regaddr, regcnt):
@@ -221,7 +218,7 @@ class Modbus:
             datum += dat.to_bytes(2,'big')
         answer += datum
         answer += self._calculate_crc_string(answer).to_bytes(2,'little')        
-        self.dprint(f'read adr={regaddr}, {regcnt}-> send {answer}')
+        self.dprint(f'read adr:{regaddr} = {regcnt}-> send {answer}')
         self.txmsg(answer)
         return datum
         

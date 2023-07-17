@@ -28,11 +28,10 @@ class PCmodbusServer(object):
     MAXREADMODBUS = 1
     MAXERROR = 10
 
-    def __init__(self, device):
-        self.device = device.split(',')[0]
-        self.port = int(device.split(',')[1])
+    def __init__(self, device, port):
+        self.port = port
         self.errorcnt = 0
-        self.deviceOpen()
+        self.interface = self.deviceOpen(device)
 
     def _check4error(self, reg, dat, typ, ex=None):
         # self.logger.debug(" check4error reg={}, dat= {}".format(reg, dat))
@@ -66,7 +65,7 @@ class PCmodbusServer(object):
             dat = None
             for cnt in range(0, self.MAXREADMODBUS):
                 try:
-                    dat = self.mb.read_register(self.register[reg]['adr'])
+                    dat = self.interface.read_register(self.register[reg]['adr'])
                 except Exception as ex:
                     error = ex
                 # self.logger.debug("Read register {} = {}".format(reg, dat))
@@ -85,7 +84,7 @@ class PCmodbusServer(object):
         # self.logger.debug("Write register {} {} = {}".format(reg, register['adr'], value))
         for cnt in range(0, self.MAXREADMODBUS):
             try:
-                self.mb.write_register(register['adr'], value)
+                self.interfacewrite_register(register['adr'], value)
                 register['date'] = value
                 error = None
             except Exception as ex:
@@ -93,16 +92,17 @@ class PCmodbusServer(object):
         if error is not None:
             self._check4error(reg, None, 'writebus', error)
 
-    def deviceOpen(self):
+    def deviceOpen(self, device):
         try:                                                # intialise modbus
             minimalmodbus.TIMEOUT = 0.5
-            self.mb = minimalmodbus.Instrument(self.device, self.port, mode='rtu', debug=False)
-            self.mb.serial.baudrate = 38400     # 19200
+            interface = minimalmodbus.Instrument(device, self.port, mode='rtu', debug=False)
+            interface.serial.baudrate = 38400     # 19200
         except Exception as ex:
             self._init_complete = False
             print("can't configure modbus : {}".format(ex))
             return
         self._init_complete = True
+        return interface
 
     def twos_comp(self, val, bits):
         """compute the 2's complement of int value val"""
@@ -112,30 +112,44 @@ class PCmodbusServer(object):
 
 
 if __name__ == '__main__':
-    # root = tk.Tk()
-    # server=modbusserver(root,tk)
-    server = PCmodbusServer('COM16, 1')
-    # server.mb.debug = True
+    device = 'COM3'
+    xAxis = PCmodbusServer(device, 1)
+    zAxis = PCmodbusServer(device, 3)
+    xAxis.interface.debug = False
+    zAxis.interface.debug = False
  #   server.write('axis', ord('X'))
-    oldcnt = -1
-    result = None
+    Xoldcnt = -1
+    Zoldcnt = -1
+    resultX = resultZ = None
     while True:
         for i in range(0, 1):
             try:
-                readvalue = server.mb.read_register(i)
-                result = server.twos_comp(readvalue, 16)
+                resultX = xAxis.twos_comp(xAxis.interface.read_register(i), 16)
+                print(f'Xcnt={resultX}')  # , Xdiff)
             except Exception:
-                # print('read error')
+                print('X read error')
+                pass
+            sleep(0.005)
+            try:
+                resultZ = zAxis.twos_comp(zAxis.interface.read_register(i), 16)
+                #print(f'Zcnt={resultZ}')  # , Zdiff)
+            except Exception:
+                #print('Z read error')
                 pass
             if i == 0:
-                cnt = result
+                Xcnt = resultX
+                Zcnt = resultZ
             else:
-                diff = result
-            sleep(0.05)
-            #sleep(2.0)
-        if oldcnt != cnt:
-            print(f'cnt={cnt}')  # , diff)
-            oldcnt = cnt
+                Xdiff = resultX
+                Zdiff = resultZ
+            # sleep(0.05)
+            sleep(1.0)
+        if Xoldcnt != Xcnt:
+            print(f'Xcnt={Xcnt}')  # , Xdiff)
+            Xoldcnt = Xcnt
+        if Zoldcnt != Zcnt:
+            print(f'Zcnt={Zcnt}')  # , Zdiff)
+            Zoldcnt = Zcnt
 
 # 'read_bit', 'read_bits', 'read_float', 'read_long', 
 # 'read_register', 'read_registers', 'read_string',

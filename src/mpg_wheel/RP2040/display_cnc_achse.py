@@ -1,6 +1,9 @@
 '''
 Handwheel with Encoder + Rasperry Pi Pico Zero
 
+use https://micropython.org/download/rp2-pico/
+        MicroPython v1.20.0 on 2023-04-26; Raspberry Pi Pico with RP2040    
+
    100 PPR Encoder  a -> GP10  (Pin12)
                     b -> GP11  (Pin11)
    
@@ -17,10 +20,7 @@ Handwheel with Encoder + Rasperry Pi Pico Zero
                   clk -> GP9 I2C0 SCL (Pin9)
                   dat -> GP8 I2C0 SDA (Pin10)
                   
-    WS2812 LED :      -> GP16
-    
-    
-    use: MicroPython v1.20.0 on 2023-04-26; Raspberry Pi Pico with RP2040    
+    WS2812 LED :      -> GP16    
     
     todo:
        - self.axis should get from the eeprom lib (emulated)
@@ -38,6 +38,8 @@ from modbus import Modbus
 import framebuf
 from ws2812 import ws2812
 
+__version__ = "V0.3"
+
 # GPIOs Rotary Encoder
 PIN_DT = 10
 PIN_CLK = 11
@@ -54,6 +56,8 @@ statusline = 48
 
 
 class cnc_axis():
+    
+    axis = 2           # todo: read from eeprom        
     
     regMemory = [0,         # absolut cnt
                  0,         # diff time in 100us
@@ -94,8 +98,7 @@ class cnc_axis():
         self.jogmode = 0				# 0-2 : button  disable, jogging, control
                                         # > 10: >4s switch to changing axis
         self.displayChange = True
-        self.buttontime = 0
-        self.axis = 0            # todo: read from eeprom    
+        self.buttontime = 0        
 
         self.rotary = Rotary(pin_dt, pin_clk, pin_sw2)                    # Init Rotary Encoder
         self.rotary.add_handler(self.rotary_changed)
@@ -106,7 +109,6 @@ class cnc_axis():
 
         self.client = Modbus(port=0, slaveaddress=self.axis+1, baudrate=38400, debug=False)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
                                                                          # should be einstellbar über EEPROM ?!
-        # self.client.debug = True
         self.client.regMemory = self.regMemory
         self.noConnectionTime = -5
 
@@ -121,7 +123,7 @@ class cnc_axis():
         self.display.fill(0)				          # ~865us
         # Blit the image from the framebuffer to the oled display
         self.display.blit(fb, 96, 18)
-        self.display.text("Heli2    V0.2", 10, 10)
+        self.display.text(f"Heli2    {__version__}", 10, 10)
         for y in range(20, 60, 10):
             self.display.show() 		               # ~50760us,   interrupt form rotary will blocked :-(
             utime.sleep_ms(500)
@@ -190,8 +192,7 @@ class cnc_axis():
     def loop(self):
         if utime.ticks_us() - self.lasttime > 500:
             self.lasttime = utime.ticks_us()
-            result = self.client.receive()
-            # result = None
+            result = self.client.receive()                      # read bus
             if result is None:
                 self.noConnectionTime += 1
                 if 5000 > self.noConnectionTime > 4000 or self.noConnectionTime < 0:
