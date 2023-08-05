@@ -6,12 +6,16 @@
 char usedAxis[] = {'X', 'Z'};
 byte paxis = 0x01;
 bool busy = false;
-byte readMpg[] = { 0x03, 0x03, 0x00, 0x00, 0x00, 0x02};      //, 0x85, 0xE8};       // Modbus protocoll
+byte readMpg[] = { 0x03, 0x03, 0x00, 0x00, 0x00, 0x02,0x85, 0xE8};       // Modbus protocoll 2,2ms sendtime
+//                  |     |      |          |           |- CRC msb/lsb
+//                  |     |      |          |- Quantity of registers msb/lsb
+//                  |     |      |- Start Adress msb/lsb
+//                  |     |- 0x03 = function code:  read Multiple Holding Registers (16-bit)
 //                  |slave ID, must be changed for each achse
-//                        |---0x03 = function code:  read Multiple Holding Registers (16-bit)
-//                               | Start Adress msb/lsb
-//                                          | Quantity of registers msb/lsb
-//                                                                | CRC msb/lsb
+
+
+
+
 
 void MPG_init(void) {
 //RS485SERIAL.setTX(8);
@@ -52,7 +56,7 @@ void MPGPollSerial(void){
                 case 2: mpgData = &mpg_data.y;break;
                 case 3: mpgData = &mpg_data.z;break;
                 //case 4: mpgData = &mpg_data.a;break;                 
-                default: *mpgData = 0;
+                default: mpgData = 0;
              }
              if (mpgValue != *mpgData) {
                if (mpgValue == 0 and (abs(mpgValue-*mpgData) > 2))       // mpgwheel get a reset or power off/on, but also 0 cnt :-(
@@ -76,12 +80,12 @@ void MPGPollSerial(void){
     }
     if (!busy && RS485SERIAL.availableForWrite()) {
       readMpg[0] = usedAxis[paxis] - 'X' +1;
-      // DEBUG("write", readMpg[0], millis());
+      uint crc = _calculate_crc_string(readMpg, 6);             
+      readMpg[6] = crc & 0x00FF;             // crc-lsb
+      readMpg[7] = (crc & 0xFF00) >>8;       // crc-lsb
+      //DEBUG("write", readMpg[0], millis());
       for(unsigned int i = 0; i<sizeof(readMpg); i++)
           RS485SERIAL.write(readMpg[i]);
-      uint crc = _calculate_crc_string(readMpg, 6);       
-      RS485SERIAL.write(crc & 0x00FF);          // lsb
-      RS485SERIAL.write((crc & 0xFF00) >>8);    // msb
       paxis++;
       if (paxis > sizeof(usedAxis)-1) paxis = 0;
       busy = true;
