@@ -72,7 +72,7 @@ typedef struct {
   float z;
   bool changed;
 } struTarget;
-struTarget target;
+// struTarget target;
 
 typedef enum {
     WSTART   =  0,          // Wellcome Page

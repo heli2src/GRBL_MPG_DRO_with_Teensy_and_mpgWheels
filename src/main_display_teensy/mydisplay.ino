@@ -137,6 +137,7 @@ typedef struct {
   }struMyStates;
   
 struMyStates mystate;
+struTarget target;
 input_t input;
 int BtnX, BtnY;             // global x y for touch stuff
 uint16_t BackColor = C_BLACK;
@@ -153,8 +154,10 @@ FlickerFreePrint<ILI9341_t3> Flickerlabel[4]= {
      FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
 };
 
-//Button Buttons[5] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),};
-Button Buttons[MAXBUTTONS](&Display);
+Button Buttons[MAXBUTTONS] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),
+                              Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),
+                              Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),};
+//Button Buttons[MAXBUTTONS](&Display);
 
 //ItemMenu MainMenu(&Display, true);
 //EditMenu Drehen(&Display, true);
@@ -749,10 +752,13 @@ void MyDisplay_init(void) {
     Touch.setRotation(1);
     Touch.calibrate(cal);        // cal is from myTouchCalibration.h
 
+    DEBUG("now init Buttons");
+
     for (int index = 0; index <MAXBUTTONS; index++) {
       Buttons[index].init(10, 80, 40, 40, TextColor, BackColor, TextColor, BackColor, "", -10, -5, FONT_LBUTTON );
       Buttons[index].hide();
     }
+    DEBUG("... ready Buttons");
     mystate.execute = Cinit;
     target.fzmin = eeprom.fzmin;
     target.fz = eeprom.fzU;
