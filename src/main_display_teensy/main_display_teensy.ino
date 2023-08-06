@@ -2,8 +2,12 @@
  *   Software for Teensy 3.2 (with MK20DX256VLH7, 3,3V)
  *   
  *   used libs:
+ *    - https://github.com/KrisKasprzak/FlickerFreePrint
  *    - https://github.com/KrisKasprzak/ILI9341_t3_controls
  *    - https://github.com/KrisKasprzak/ILI9341_t3_Menu
+ *    - https://github.com/ardnew/XPT2046_Calibrated
+ *    - Bugtton      Version 1.0.5
+ *    - MicroDebug   Version 1.1
  * 
  *  free Pins:
  *  - 4-6, 16-23
@@ -82,7 +86,7 @@ void setup()
 //   DEBUG("MAC:");
 //   print_mac();    
 //   DEBUG(" ");  
-// eeprom_write_default(); 
+ //eeprom_write_default(); 
    eeprom_read();
    if (strcmp(eeprom.Copyright, "Heli2")!=0) {
       DEBUG("EEPROM init first");
