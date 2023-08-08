@@ -692,7 +692,7 @@ void Ddefault(void) {              // set default values
         };
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
         target.changed = true;
-        showMessageButtons("B1", "B2", "B3", "ok");
+        showMessageButtons("", "", "", "ok");
         break;}
      case Crun: {
         if (target.changed) {
