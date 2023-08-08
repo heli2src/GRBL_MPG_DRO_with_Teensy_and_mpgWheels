@@ -14,3 +14,14 @@ Features:
 Source code not ready yet, there are some bugs, use it carfully!
 <br><br><br>
 <img src="docs/images/dev_1.jpg"></img>
+<br><br><br>
+## Compiling
+you have to use the arduino version 1.8.19. You get compiler errors
+With the latest version 2.x.
+You must use the following libraries:
+- https://github.com/KrisKasprzak/FlickerFreePrint
+-  https://github.com/KrisKasprzak/ILI9341_t3_controls
+- https://github.com/KrisKasprzak/ILI9341_t3_Menu
+- https://github.com/ardnew/XPT2046_Calibrated
+- Bugtton      Version 1.0.5
+- MicroDebug   Version 1.1
