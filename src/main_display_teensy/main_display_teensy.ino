@@ -13,8 +13,9 @@
  *  - 4-6, 16-23
  *  used Pins:
  *  - Buttons left  ->  Pin 14
- *            right ->  Pin 15
- *                  ->  Pin 16 
+ *            left1 ->  Pin 15
+ *            right1->  Pin 16 
+ *            right ->  Pin 17 
  *            
  *  - Uart
  +       for communication with the grblHAL:
