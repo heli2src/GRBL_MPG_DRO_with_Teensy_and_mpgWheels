@@ -74,7 +74,7 @@ void MPGPollSerial(void){
           busy = false;
       }
     }else if (mpg_data.latest_read_time-millis() > timeout) {
-      DEBUG("Missing", readMpg[0], millis());
+ //     DEBUG("Missing", readMpg[0], millis());
       mpg_data.counter = 0;
       busy = false;
     }

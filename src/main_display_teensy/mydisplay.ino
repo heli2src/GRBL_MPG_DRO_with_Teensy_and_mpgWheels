@@ -287,24 +287,24 @@ void showMessage(void){         // display a status and Button Line in the lower
     if (mystate.svisible && mystate.change_grblState) {    // Display active buttons
         mystate.change_grblState = false;  
         if (mystate.grblState == Idle) {
-            showMessageButtons("Start","Z=0");
+            showMessageButtons("Start", "", "", "Z=0");
         }else if (mystate.grblState == Run){
             mystate.alarm = 0;
-            showMessageButtons("Stop","");
+            showMessageButtons("Stop", "", "", "");
         }
     }else if (!mystate.svisible)
         mystate.change_grblState = true;
 }
 
-void showMessageButtons(const char* buttonL, const char* buttonR){
+void showMessageButtons(const char* buttonL1, const char* buttonL2, const char* buttonR2, const char* buttonR1){
 // Display the messages for the bottom control buttons  
     Display.fillRect(20, 220, 50, 30, BackColor);
     Display.fillRect(250, 220, 70, 30, BackColor);
     Display.setFont(F_A14); 
-    Display.setCursor(20, 220);  
-    Display.print(buttonL);            
-    Display.setCursor(250, 220); 
-    Display.print(buttonR);  
+    Display.setCursor( 30, 220); Display.print(buttonL1);
+    Display.setCursor(115, 220); Display.print(buttonL2);
+    Display.setCursor(200, 220); Display.print(buttonR2);  
+    Display.setCursor(285, 220); Display.print(buttonR1);
 }
 //=======================================================================================
 
@@ -315,7 +315,7 @@ void Dinit(void) {
            {  10,   10, C_WHITE, "T0", "      --  (c) Heli2  --", 0}, // 0
            { 110,   80, C_BLUE,  "T1", "Elektronische",           0}, // 1
            { 120,  110, C_BLUE,  "T1", "Leitspindel",             0}, // 2            
-           { 130,  140, C_BLUE,  "T1", "V0.14",                   0}, // 3
+           { 130,  140, C_BLUE,  "T1", "V0.15",                   0}, // 3
            //{ 130,  160, C_BLUE, "T", eeprom.Version,            0}, // 3
         };
         DEBUG("   Dinit: Cinit");  
@@ -436,7 +436,7 @@ void Adrehen(void) {              // Aussendrehen
                   }else{
                       sprintf(command, "G95 F%.3f G90 G01 Z%.3f", target.fz, target.z);
                   }
-              }else if (mystate.DROkey == 1)      // right button
+              }else if (mystate.DROkey == 3)      // right button
                   sprintf(command, "G00 Z0");     // Verfahren im Eilgang auf 0 
               serial0_writeLn(command);
               serial_writeLn(command);
@@ -519,7 +519,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
             Display.setCursor(40, 90+y*20);
             Display.print(F(line));
         }
-        showMessageButtons(buttonL, buttonR);
+        showMessageButtons(buttonL, "", "", buttonR);
         mystate.lastAlarm = mystate.alarm;
         mystate.lastError = mystate.error;
         break;
@@ -557,7 +557,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
           DEBUG("         index=", msgindex);
           if (mystate.DROkey==0)
               dbutton = buttonL;
-          else if (mystate.DROkey == 1) 
+          else if (mystate.DROkey == 3) 
               dbutton = buttonR;
           DEBUG("         Button=", dbutton);
           if (strlen(dbutton)>0){
@@ -692,7 +692,7 @@ void Ddefault(void) {              // set default values
         };
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
         target.changed = true;
-        showMessageButtons("","ok");
+        showMessageButtons("B1", "B2", "B3", "ok");
         break;}
      case Crun: {
         if (target.changed) {
@@ -709,7 +709,7 @@ void Ddefault(void) {              // set default values
         break;}
   case Ckeys:{
         DEBUG("   Ddefault Ckeys", mystate.DROkey);
-        if (mystate.DROkey == 1){           // right button
+        if (mystate.DROkey == 3){           // right button
             mystate.state = WMENUE;       // mystate.prevstate;
         }
         mystate.DROkey = -1;   
