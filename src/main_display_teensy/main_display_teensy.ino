@@ -105,18 +105,18 @@ void setup()
 } 
 
 bool tim50=false; 
-bool tim20=false;
+bool tim25=false;
 void loop() 
 {   
     char buffer [60];
     String sbuffer;
     unsigned long mylooptime = millis();
 
-    if (mylooptime % 20 == 0 && tim20) {    //call every 20ms   
+    if (mylooptime % 25 == 0 && tim25) {    //call every 25ms   
         MPGPollSerial();                    //defined in handwheel.ino
-        tim20 = false;        
-    }else if (mylooptime % 20 != 0)
-        tim20 = true;
+        tim25 = false;        
+    }else if (mylooptime % 25 != 0)
+        tim25 = true;
 
     if (mylooptime % 50 == 0 && tim50) {    //call every 50ms
         MyDisplay_loop();
