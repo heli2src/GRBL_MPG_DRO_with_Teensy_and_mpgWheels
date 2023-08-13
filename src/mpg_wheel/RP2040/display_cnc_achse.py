@@ -196,16 +196,16 @@ class cnc_axis():
         self.displayChange = False        
 
     def loop(self):
-        if utime.ticks_us() - self.lasttime > 500:
+        if utime.ticks_us() - self.lasttime > 500:			# call every 500us
             self.lasttime = utime.ticks_us()
             result = self.client.receive()                      # read bus
             if result is None:
                 self.noConnectionTime += 1
-                if 5000 > self.noConnectionTime > 4000 or self.noConnectionTime < 0:
+                if 5000 > self.noConnectionTime > 1000 or self.noConnectionTime < 0:
                     self.displayChange = True
                     self.noConnectionTime = 5000
             else:
-                if self.noConnectionTime > 4000 or self.noConnectionTime < 0:
+                if self.noConnectionTime > 1000 or self.noConnectionTime < 0:
                     self.displayChange = True
                 self.noConnectionTime = 0
             if self.valueChange:
