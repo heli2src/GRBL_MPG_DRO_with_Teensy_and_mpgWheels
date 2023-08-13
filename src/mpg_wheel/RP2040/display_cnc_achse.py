@@ -7,9 +7,7 @@ use https://micropython.org/download/rp2-pico/
    100 PPR Encoder  a -> GP10  (Pin12)
                     b -> GP11  (Pin11)
    
-   
-   0.01/0.1/1mm switch     -> GP22, Pin 29      switch to gnd   GP13
-   disable/jogging/control -> GP21, Pin 27      switch to gnd   GP14
+   4x switch 26, 15, 14, 13  to gnd 
    
    RS485           DI  (4) -> GP0 (TX0) Pin1
                    DE  (3) -> VDD          Transceiver Output Enable
@@ -38,15 +36,23 @@ from modbus import Modbus
 import framebuf
 from ws2812 import ws2812
 
-__version__ = "V0.3"
+__version__ = "V0.4"
+NORMAL = True               # if False: mirrored switch layout
 
 # GPIOs Rotary Encoder
 PIN_DT = 10
 PIN_CLK = 11
-PIN_SW1 = 26          # 
-PIN_SW2 = 15          # jog-mode, control mode
-PIN_SW3 = 14          # switch for reset cnt, choice incValue
-PIN_SW4 = 13
+
+if NORMAL:
+    PIN_SW1 = 26          # Start/Stop
+    PIN_SW2 = 15          # 
+    PIN_SW3 = 14          # choice incValue
+    PIN_SW4 = 13          # disable, jog-mode, control mode
+else:
+    PIN_SW1 = 13
+    PIN_SW2 = 14
+    PIN_SW3 = 15
+    PIN_SW4 = 26              
 
 # GPIOs Display 1306 with I2C
 PIN_I2CCLK = 9
@@ -57,7 +63,7 @@ statusline = 48
 
 class cnc_axis():
     
-    axis = 2           # todo: read from eeprom        
+    axis = 0           # todo: read from eeprom        
     
     regMemory = [0,         # absolut cnt
                  0,         # diff time in 100us
@@ -100,12 +106,12 @@ class cnc_axis():
         self.displayChange = True
         self.buttontime = 0        
 
-        self.rotary = Rotary(pin_dt, pin_clk, pin_sw2)                    # Init Rotary Encoder
+        self.rotary = Rotary(pin_dt, pin_clk, pin_sw3)                    # Init Rotary Encoder
         self.rotary.add_handler(self.rotary_changed)
         self.valueChange = False
         
-        sw3 = Pin(pin_sw3, Pin.IN, Pin.PULL_UP)
-        sw3.irq(handler=self.sw_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
+        sw4 = Pin(pin_sw4, Pin.IN, Pin.PULL_UP)
+        sw4.irq(handler=self.sw_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
 
         self.client = Modbus(port=0, slaveaddress=self.axis+1, baudrate=38400, debug=False)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
                                                                          # should be einstellbar über EEPROM ?!
@@ -203,7 +209,7 @@ class cnc_axis():
                     self.displayChange = True
                 self.noConnectionTime = 0
             if self.valueChange:
-                print(f'change {self.regMemory}')
+                self.dprint(f'change {self.regMemory}')
                 self.valueChange = False
         if self.displayChange and self.jogmode < 10:
             self.display_page1()
