@@ -19,7 +19,10 @@ void eeprom_write_default(void){
     eeprom.BGred = 0;
     eeprom.BGgreen = 0;
     eeprom.BGblue = 0;
+    eeprom.fxmin = 500.0;
+    eeprom.fymin = 500.0;
     eeprom.fzmin = 500.0;
+    eeprom.fxU = 0.1;
     eeprom.fzU = 0.1;
     eeprom.fzjog001  = 100;
     eeprom.fzjog01 = 500;   

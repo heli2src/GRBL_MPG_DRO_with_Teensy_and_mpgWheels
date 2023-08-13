@@ -6,7 +6,7 @@
 char usedAxis[] = {'X', 'Z'};
 byte paxis = 0x01;
 bool busy = false;
-byte readMpg[] = { 0x03, 0x03, 0x00, 0x00, 0x00, 0x02,0x85, 0xE8};       // Modbus protocoll 2,2ms sendtime
+byte readMpg[] = { 0x03, 0x03, 0x00, 0x00, 0x00, 0x03,0x85, 0xE8};       // Modbus protocoll 2,2ms sendtime
 //                  |     |      |          |           |- CRC msb/lsb
 //                  |     |      |          |- Quantity of registers msb/lsb
 //                  |     |      |- Start Adress msb/lsb
@@ -36,25 +36,33 @@ uint _calculate_crc_string(char* buffer, uint length){
 
 void MPGPollSerial(void){
   int *mpgData;
+  int *mpgSwitch;
     if (RS485SERIAL.available()){
       mpg_data.counter = 0;
       while (RS485SERIAL.available()){
         char c = RS485SERIAL.read();             //receive b'\x03\x03\x02\x00\x00\xc1\x84'
         if(mpg_data.counter < MPG_BLOCK_LENGTH - 1)
-          mpg_data.block[mpg_data.counter++] = c;    
+          mpg_data.block[mpg_data.counter++] = c;  
       }
       mpg_data.latest_read_time = millis();
-      if (mpg_data.counter == 9 && mpg_data.block[1] == readMpg[1] && mpg_data.block[2] == 4) {     
+      if (mpg_data.counter ==11 && mpg_data.block[1] == readMpg[1] && mpg_data.block[2] == 6) {     
           uint result = _calculate_crc_string(mpg_data.block, mpg_data.counter);
-          if (result == 0 &&  (mpg_data.block[0] >= 0) &&  (mpg_data.block[0] <=4)){    
+          if (result == 0 &&  (mpg_data.block[0] >= 0) &&  (mpg_data.block[0] <=4)){        //  Axis 0 = X, 1 = Y, 2 = Z
              int mpgValue = int(mpg_data.block[3] << 8) + int(mpg_data.block[4]);
-             int dtime = int(mpg_data.block[5] << 8) + int(mpg_data.block[6]);             
+             int dtime = int(mpg_data.block[5] << 8) + int(mpg_data.block[6]);
+             int vswitch  = int(mpg_data.block[7] << 8) + int(mpg_data.block[8]);
              if (mpgValue > 32768) mpgValue= mpgValue-65536;
-             //DEBUG("read", int(mpg_data.block[0]), mpgValue, millis());   
+             //if (mpg_data.block[0] == 1) { // and  vswitch !=0) {DEBUG("read", int(mpg_data.block[0]), mpgValue, dtime, vswitch, millis()); }
              switch (mpg_data.block[0]){
-                case 1: mpgData = &mpg_data.x;break;
-                case 2: mpgData = &mpg_data.y;break;
-                case 3: mpgData = &mpg_data.z;break;
+                case 1: mpgData = &mpg_data.x;
+                        mpgSwitch = &mpg_data.x_switch;
+                        break;
+                case 2: mpgData = &mpg_data.y;
+                        mpgSwitch = &mpg_data.y_switch;
+                        break;
+                case 3: mpgData = &mpg_data.z;
+                        mpgSwitch = &mpg_data.z_switch;
+                        break;
                 //case 4: mpgData = &mpg_data.a;break;                 
                 default: mpgData = 0;
              }
@@ -66,6 +74,11 @@ void MPGPollSerial(void){
                    DROmpgEvent(true, mpg_data.block[0]+'X'-1, mpgValue-(*mpgData), dtime);          
                    *mpgData = mpgValue;
                }
+             }
+             if (vswitch != *mpgSwitch){
+                  *mpgSwitch = vswitch;
+                  if (vswitch > 0)
+                      DROkeyEvent(true, vswitch);
              }             
           }else{
              mpg_data.counter = 0;

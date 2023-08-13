@@ -36,8 +36,8 @@ from modbus import Modbus
 import framebuf
 from ws2812 import ws2812
 
-__version__ = "V0.4"
-NORMAL = True               # if False: mirrored switch layout
+__version__ = "V0.5"
+NORMAL = False               # if False: mirrored switch layout
 
 # GPIOs Rotary Encoder
 PIN_DT = 10
@@ -45,14 +45,14 @@ PIN_CLK = 11
 
 if NORMAL:
     PIN_SW1 = 26          # Start/Stop
-    PIN_SW2 = 15          # 
-    PIN_SW3 = 14          # choice incValue
-    PIN_SW4 = 13          # disable, jog-mode, control mode
+    PIN_SW2 = 15          # choice incValue
+    PIN_SW3 = 14          # disable, jog-mode, control mode
+    PIN_SW4 = 13          # set to zero
 else:
-    PIN_SW1 = 13
-    PIN_SW2 = 14
-    PIN_SW3 = 15
-    PIN_SW4 = 26              
+    PIN_SW1 = 13          # Start/Stop
+    PIN_SW2 = 14          # choice incValue
+    PIN_SW3 = 15          # disable, jog-mode, control mode
+    PIN_SW4 = 26          # set to zero     
 
 # GPIOs Display 1306 with I2C
 PIN_I2CCLK = 9
@@ -67,7 +67,7 @@ class cnc_axis():
     
     regMemory = [0,         # absolut cnt
                  0,         # diff time in 100us
-                 0,         # inc value
+                 0,         # switch values
                  0]
     choiceAxis = ['X', 'Y', 'Z', 'A']
     
@@ -106,12 +106,17 @@ class cnc_axis():
         self.displayChange = True
         self.buttontime = 0        
 
-        self.rotary = Rotary(pin_dt, pin_clk, pin_sw3)                    # Init Rotary Encoder
+        self.rotary = Rotary(pin_dt, pin_clk, pin_sw2)                    # Init Rotary Encoder
         self.rotary.add_handler(self.rotary_changed)
         self.valueChange = False
+        self.switchtime = 0
         
+        sw1 = Pin(pin_sw1, Pin.IN, Pin.PULL_UP)
+        sw1.irq(handler=self.sw1_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
+        sw3 = Pin(pin_sw3, Pin.IN, Pin.PULL_UP)
+        sw3.irq(handler=self.sw3_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
         sw4 = Pin(pin_sw4, Pin.IN, Pin.PULL_UP)
-        sw4.irq(handler=self.sw_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
+        sw4.irq(handler=self.sw4_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
 
         self.client = Modbus(port=0, slaveaddress=self.axis+1, baudrate=38400, debug=False)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
                                                                          # should be einstellbar über EEPROM ?!
@@ -126,18 +131,32 @@ class cnc_axis():
         # Raspberry Pi logo as 32x32 bytearray
         buffer = bytearray(b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00|?\x00\x01\x86@\x80\x01\x01\x80\x80\x01\x11\x88\x80\x01\x05\xa0\x80\x00\x83\xc1\x00\x00C\xe3\x00\x00~\xfc\x00\x00L'\x00\x00\x9c\x11\x00\x00\xbf\xfd\x00\x00\xe1\x87\x00\x01\xc1\x83\x80\x02A\x82@\x02A\x82@\x02\xc1\xc2@\x02\xf6>\xc0\x01\xfc=\x80\x01\x18\x18\x80\x01\x88\x10\x80\x00\x8c!\x00\x00\x87\xf1\x00\x00\x7f\xf6\x00\x008\x1c\x00\x00\x0c \x00\x00\x03\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
         fb = framebuf.FrameBuffer(buffer, 32, 32, framebuf.MONO_HLSB)
-        self.display.fill(0)				          # ~865us
+        self.display.fill(0)                       # ~865us
         # Blit the image from the framebuffer to the oled display
         self.display.blit(fb, 96, 18)
         self.display.text(f"Heli2    {__version__}", 10, 10)
         for y in range(20, 60, 10):
-            self.display.show() 		               # ~50760us,   interrupt form rotary will blocked :-(
+            self.display.show()                    # ~50760us,   interrupt form rotary will blocked :-(
             utime.sleep_ms(500)
             self.display.text("Heli2", y, y)       # ~310us
         utime.sleep_ms(500)
-        self.wdt = WDT(timeout=1000)  # enable Watchdog, with a timeout of 1s        
+        self.wdt = WDT(timeout=1000)  # enable Watchdog, with a timeout of 1s
 
-    def sw_irq(self, pin):
+    def sw1_irq(self, pin):
+        value = pin.value()
+        if value== 0:
+            self.buttontime = utime.ticks_ms()
+            return
+        if self.buttontime == 0:
+            return
+        dtime = utime.ticks_ms()- self.buttontime
+        if value == 1 and (dtime > 100 and dtime < 900):
+            value = value + (self.axis+1) *10
+            self.regMemory[2] = value
+            print(f'       sw1 ={value}')  
+            self.switchtime = utime.ticks_ms()
+
+    def sw3_irq(self, pin):
         value = pin.value()
         if value== 0:
             self.buttontime = utime.ticks_ms()
@@ -160,7 +179,21 @@ class cnc_axis():
             self.buttontime = 0
             self.displayChange = True
             self.jogmode = 0 if self.jogmode >= 10 else 10
-            print(f'       config {dtime}')           
+            print(f'       config {dtime}')
+
+    def sw4_irq(self, pin):
+        value = pin.value()
+        if value== 0:
+            self.buttontime = utime.ticks_ms()
+            return
+        if self.buttontime == 0:
+            return
+        dtime = utime.ticks_ms()- self.buttontime
+        if value == 1 and (dtime > 100 and dtime < 900):
+            value = value * 4 + (self.axis+1) *10
+            self.regMemory[2] = value
+            print(f'       sw4 ={value}')
+            self.switchtime = utime.ticks_ms()
 
     def rotary_changed(self, value):
         self.regMemory[0] = value[0][0]                           # absolut cnt
@@ -196,7 +229,7 @@ class cnc_axis():
         self.displayChange = False        
 
     def loop(self):
-        if utime.ticks_us() - self.lasttime > 500:			# call every 500us
+        if utime.ticks_us() - self.lasttime > 500:              # call every 500us
             self.lasttime = utime.ticks_us()
             result = self.client.receive()                      # read bus
             if result is None:
@@ -211,6 +244,10 @@ class cnc_axis():
             if self.valueChange:
                 self.dprint(f'change {self.regMemory}')
                 self.valueChange = False
+            if self.switchtime>0 and utime.ticks_ms() - self.switchtime > 500:
+                print("switch = 0")
+                self.switchtime = 0
+                self.regMemory[2] = 0
         if self.displayChange and self.jogmode < 10:
             self.display_page1()
         elif self.displayChange and self.jogmode >= 10:

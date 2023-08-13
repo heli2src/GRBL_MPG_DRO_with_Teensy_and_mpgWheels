@@ -1,5 +1,5 @@
 #define RS485SERIAL Serial3
-#define MPG_BLOCK_LENGTH 10
+#define MPG_BLOCK_LENGTH 12
 
 unsigned long timeout = 6;
 
@@ -9,6 +9,7 @@ typedef struct {
     int y;
     int z;
     int a;    
+    int vswitch;
     int x_switch;
     int y_switch;
     int z_switch;

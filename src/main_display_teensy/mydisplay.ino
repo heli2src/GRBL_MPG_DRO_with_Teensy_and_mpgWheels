@@ -67,6 +67,8 @@ uint16_t TITLE_BACK = C_VALUES[36];
 //#define FONT_ITEM   Arial_16             // font for menus
 //#define FONT_TITLE  Arial_24_Bold        // font for all headings
 
+char command[50];
+
 typedef struct {
     short numstate;
     void (*function)();
@@ -343,7 +345,7 @@ void Dmenue(void){
     case Cinit: {
         struPage mytext []= {
            { 100,                          10, TextColor, "T0","Menue",                 0},     // 0
-           { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Drehen        ",      WDREHEN},  // 1
+           { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Manuell Drehen",      WDREHEN},  // 1
            { 140, COLUMN1+11+1*COLUM_DISTANCE, TextColor, "B", "Default values",      WDEFAULT}, // 2           
            { 140, COLUMN1+11+2*COLUM_DISTANCE, TextColor, "B", "Home          ",      WHOME},    // 3
            { 140, COLUMN1+11+3*COLUM_DISTANCE, TextColor, "B", "Reset         ",      WRESET}    // 4           
@@ -387,7 +389,7 @@ void Adrehen(void) {              // Aussendrehen
    switch (mystate.execute) {
     case Cinit: {
         struPage mytext[]= {
-           { 90,                           7, TextColor, "T0", "Drehen",             0}, // 0
+           { 10,                           7, TextColor, "T0", "Manuell Drehen",     0}, // 0
            { 35, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "F :",               0}, // 1
            { 53, COLUMN1+0*COLUM_DISTANCE+15, TextColor, "T2",  "z",                 0}, // 1
            {120, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2",  "mm/U",              0}, // 1
@@ -428,21 +430,47 @@ void Adrehen(void) {              // Aussendrehen
         break;}
    case Ckeys:{
           DEBUG("   Adrehen Ckeys", mystate.DROkey); 
+          char axis;
+          axis = mystate.DROkey / 10 + 'X' -1;
           if (mystate.grblState == Idle) {        // = 1
-              static char command[50];
-              if (mystate.DROkey == 0){           // left button
+              float targetfmin, targetf, targetaxis;
+              switch (axis) {
+                  case 'X': {targetfmin = target.fxmin;
+                            targetf = target.fx;
+                            targetaxis = target.x; 
+                            break;}
+                  case 'Y': {targetfmin = target.fymin;
+                            targetf = target.fy;
+                            targetaxis = target.y; 
+                            break;}
+                  case 'Z': {targetfmin = target.fzmin;
+                            targetf = target.fz;
+                            targetaxis = target.z; 
+                            break;}
+                  default:  {targetfmin = 100;
+                            targetf = 0;
+                            targetaxis = 'C'; 
+                            break;}
+              }
+              sprintf(command, "");                                                      
+              if (mystate.DROkey % 10  == 1){           // left button
                   if (mystate.rpm == 0.0) {
-                      sprintf(command, "G94 F%.3f G90 G01 Z%.3f", target.fzmin, target.z);     // *100 ??
+                      sprintf(command, "G94 F%.3f G90 G01 %c%.3f", targetfmin, axis, targetaxis);
                   }else{
-                      sprintf(command, "G95 F%.3f G90 G01 Z%.3f", target.fz, target.z);
+                      sprintf(command, "G95 F%.3f G90 G01 %c%.3f", targetf, axis, targetaxis);
                   }
-              }else if (mystate.DROkey == 3)      // right button
-                  sprintf(command, "G00 Z0");     // Verfahren im Eilgang auf 0 
+              }else if (mystate.DROkey % 10  == 4)      // right button
+                  sprintf(command, "G00 %c0", axis);     // Verfahren im Eilgang auf 0
               serial0_writeLn(command);
               serial_writeLn(command);
               mystate.DROkey = -1;
               break;
-          }          
+          }else if (mystate.grblState == Run) { 
+              if (mystate.DROkey % 10  == 1){
+                  DEBUG("Stop");       
+                  serial_putC(CMD_STOP);
+              }                   
+          }
         break;}
    }
 }
@@ -760,7 +788,10 @@ void MyDisplay_init(void) {
     }
     DEBUG("... ready Buttons");
     mystate.execute = Cinit;
+    target.fxmin = eeprom.fxmin;
+    target.fymin = eeprom.fymin;
     target.fzmin = eeprom.fzmin;
+    target.fx = eeprom.fxU;
     target.fz = eeprom.fzU;
     target.x = 0.0;
     target.y = 0.0;    
@@ -874,8 +905,6 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
     // sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGdtime); debugDisplay(buffer50);
     if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey!= 0))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging
         // DEBUG(mystate.grblState, Idle, Jog, mystate.state, MPGkey);
-        
-        static char command[50];
         float speed;
         unsigned long time = millis();
         unsigned long dtime = time-mystate.mpgtime[index];
@@ -896,7 +925,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
 void processKeypress (int DROkey, int keydown, float rpm){
     // call from dro.c->DROProcessEvents 
     //char *dbutton = (char*)"-1";
-    DEBUG("processKeypress DROkey|grblState|state=", DROkey, mystate.grblState, mystate.state, "Codes for Idle|Alarm|Run",  Idle, Alarm, Run); 
+//    DEBUG("processKeypress DROkey|grblState|state=", DROkey, mystate.grblState, mystate.state, "Codes for Idle|Alarm|Run",  Idle, Alarm, Run); 
     mystate.rpm = rpm;
     
     // evaluate key in the deticated page:

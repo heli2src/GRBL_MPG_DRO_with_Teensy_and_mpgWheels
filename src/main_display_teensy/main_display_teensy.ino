@@ -87,7 +87,7 @@ void setup()
 //   DEBUG("MAC:");
 //   print_mac();    
 //   DEBUG(" ");  
- //eeprom_write_default(); 
+ eeprom_write_default(); 
    eeprom_read();
    if (strcmp(eeprom.Copyright, "Heli2")!=0) {
       DEBUG("EEPROM init first");

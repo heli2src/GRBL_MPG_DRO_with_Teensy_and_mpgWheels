@@ -64,9 +64,12 @@ typedef enum {
 
 typedef struct {
   float fx;
+  float fy; 
   float fz; 
   float fzOld; 
   float fzmin;      // value for Fz mm/min
+  float fxmin;      // value for Fx mm/min
+  float fymin;      // value for Fx mm/min
   float x;
   float y;
   float z;
