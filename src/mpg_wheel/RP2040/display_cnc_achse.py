@@ -21,7 +21,7 @@ use https://micropython.org/download/rp2-pico/
     WS2812 LED :      -> GP16    
     
     todo:
-       - self.axis should get from the eeprom lib (emulated)
+       - AXIS should get from the eeprom lib (emulated)
        - use dma for the data from SSD1306
        - display values from the axis
        - control mode only dummy yet
@@ -37,13 +37,17 @@ import framebuf
 from ws2812 import ws2812
 
 __version__ = "V0.5"
-NORMAL = False               # if False: mirrored switch layout
+#Configuration
+AXIS = 0                     # 0 = X, 1 = Y, 2 = Z
+ROTDIR = -1                  # 1 = normal rotary, -1 = invers
+KEYLAYOUT = False            # if False: mirrored switch layout
+#_____________________________
 
 # GPIOs Rotary Encoder
 PIN_DT = 10
 PIN_CLK = 11
 
-if NORMAL:
+if KEYLAYOUT:
     PIN_SW1 = 26          # Start/Stop
     PIN_SW2 = 15          # choice incValue
     PIN_SW3 = 14          # disable, jog-mode, control mode
@@ -106,7 +110,7 @@ class cnc_axis():
         self.displayChange = True
         self.buttontime = 0        
 
-        self.rotary = Rotary(pin_dt, pin_clk, pin_sw2)                    # Init Rotary Encoder
+        self.rotary = Rotary(ROTDIR, pin_dt, pin_clk, pin_sw2)                    # Init Rotary Encoder
         self.rotary.add_handler(self.rotary_changed)
         self.valueChange = False
         self.switchtime = 0
@@ -118,7 +122,7 @@ class cnc_axis():
         sw4 = Pin(pin_sw4, Pin.IN, Pin.PULL_UP)
         sw4.irq(handler=self.sw4_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
 
-        self.client = Modbus(port=0, slaveaddress=self.axis+1, baudrate=38400, debug=False)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
+        self.client = Modbus(port=0, slaveaddress=AXIS+1, baudrate=38400, debug=False)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
                                                                          # should be einstellbar über EEPROM ?!
         self.client.regMemory = self.regMemory
         self.noConnectionTime = -5
@@ -151,7 +155,7 @@ class cnc_axis():
             return
         dtime = utime.ticks_ms()- self.buttontime
         if value == 1 and (dtime > 100 and dtime < 900):
-            value = value + (self.axis+1) *10
+            value = value + (AXIS+1) *10
             self.regMemory[2] = value
             print(f'       sw1 ={value}')  
             self.switchtime = utime.ticks_ms()
@@ -190,7 +194,7 @@ class cnc_axis():
             return
         dtime = utime.ticks_ms()- self.buttontime
         if value == 1 and (dtime > 100 and dtime < 900):
-            value = value * 4 + (self.axis+1) *10
+            value = value * 4 + (AXIS+1) *10
             self.regMemory[2] = value
             print(f'       sw4 ={value}')
             self.switchtime = utime.ticks_ms()
@@ -206,7 +210,7 @@ class cnc_axis():
             
     def display_page1(self):
         self.display.fill(0)
-        self.display.text(f'{self.choiceAxis[self.axis]}-axis', 0, 0)
+        self.display.text(f'{self.choiceAxis[AXIS]}-axis', 0, 0)
         if self.noConnectionTime > 4000:
             self.display.text('no connection', 20, 10)
         else:
@@ -222,8 +226,8 @@ class cnc_axis():
     def display_page2(self):
         print("display_page2")
         self.display.fill(0)
-        self.axis = self.jogmode-10
-        text = f'axis = {self.choiceAxis[self.axis]}'
+        AXIS = self.jogmode-10
+        text = f'axis = {self.choiceAxis[AXIS]}'
         self.display.text(text, 20, statusline-20)
         self.display.show()
         self.displayChange = False        

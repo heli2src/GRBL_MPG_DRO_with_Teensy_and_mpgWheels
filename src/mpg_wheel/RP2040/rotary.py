@@ -12,7 +12,7 @@ class Rotary:
 #    SW_RELEASE = 8
     debounceThreshold = 700
     
-    def __init__(self, dt, clk, sw):
+    def __init__(self, increment, dt, clk, sw):
         self.dt_pin = Pin(dt, Pin.IN, Pin.PULL_UP)
         self.clk_pin = Pin(clk, Pin.IN, Pin.PULL_UP)
         self.sw_pin = Pin(sw, Pin.IN, Pin.PULL_UP)
@@ -26,7 +26,7 @@ class Rotary:
         self.debounceLast = 0
         self.buttontime = 0
         self.arg = array.array('i',[0, 0, 1])
-        self.increment = 1
+        self.increment = increment
         self._enable = False
         
     def enable(self, value):
