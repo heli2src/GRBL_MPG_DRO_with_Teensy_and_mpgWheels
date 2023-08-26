@@ -63,19 +63,18 @@ typedef enum {
 } align_t;
 
 typedef struct {
-  float fx;
+  float fx;         // value for Fx mm/U
   float fy; 
   float fz; 
   float fzOld; 
-  float fzmin;      // value for Fz mm/min
   float fxmin;      // value for Fx mm/min
-  float fymin;      // value for Fx mm/min
+  float fymin;      // value for Fy mm/min
+  float fzmin;      // value for Fz mm/min
   float x;
   float y;
   float z;
   bool changed;
 } struTarget;
-// struTarget target;
 
 typedef enum {
     WSTART   =  0,          // Wellcome Page
@@ -212,7 +211,7 @@ typedef struct {
    
 void MyDisplay_init(void);
 void MyDisplay_loop(void);
-void drawString(uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint16_t y, const char *string, bool opaque);
+void drawString(uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint16_t y, float value, const char *string, bool opaque);
 void set_grblstate(int value, const char* string, uint16_t color, int alarm, int error);
 void processKeypress(int DROkey, int keydown, float rpm);
 void processJoystick(int MPGkey);

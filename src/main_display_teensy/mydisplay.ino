@@ -123,6 +123,9 @@ typedef struct {
     int grblState = 0;   // = dro.c/grbl.state : "Unknown", "Idle", "Run", "Jog", "Hold", "Alarm", "Check", "Door", "Tool", "Home", "Sleep"
     int substate;
     int DROkey = -1;
+    float x = 0.0;
+    float y = 0.0;
+    float z = 0.0;
     float rpm = 0.0;
     bool change_grblState = true;
     uint16_t  color_grblState;
@@ -288,12 +291,12 @@ void showMessage(void){         // display a status and Button Line in the lower
     }
     if (mystate.svisible && mystate.change_grblState) {    // Display active buttons
         mystate.change_grblState = false;  
-        if (mystate.grblState == Idle) {
-            showMessageButtons("Start", "", "", "Z=0");
-        }else if (mystate.grblState == Run){
-            mystate.alarm = 0;
-            showMessageButtons("Stop", "", "", "");
-        }
+ //       if (mystate.grblState == Idle) {
+ //           showMessageButtons("Start", "", "", "Z=0");
+ //       }else if (mystate.grblState == Run){
+ //           mystate.alarm = 0;
+ //           showMessageButtons("Stop", "", "", "");
+ //       }
     }else if (!mystate.svisible)
         mystate.change_grblState = true;
 }
@@ -317,7 +320,7 @@ void Dinit(void) {
            {  10,   10, C_WHITE, "T0", "      --  (c) Heli2  --", 0}, // 0
            { 110,   80, C_BLUE,  "T1", "Elektronische",           0}, // 1
            { 120,  110, C_BLUE,  "T1", "Leitspindel",             0}, // 2            
-           { 130,  140, C_BLUE,  "T1", "V0.15",                   0}, // 3
+           { 130,  140, C_BLUE,  "T1", "V0.16",                   0}, // 3
            //{ 130,  160, C_BLUE, "T", eeprom.Version,            0}, // 3
         };
         DEBUG("   Dinit: Cinit");  
@@ -411,7 +414,7 @@ void Adrehen(void) {              // Aussendrehen
     // die Tasten selber werden dann in dro.c/processKeypress bearbeitet.
     // die schnellen Anzeigen, werden mit drawString() in dro.c geschrieben
         if (target.changed) {
-            // DEBUG("   Adrehen Crun", target.x, target.z);
+            DEBUG("   Adrehen Crun", target.x, target.z);
             sprintf(buffer10, "%.3f", target.fz);
             Buttons[0].setText(buffer10);
             sprintf(buffer10, "%.3f", target.x);
@@ -429,27 +432,32 @@ void Adrehen(void) {              // Aussendrehen
 //        DEBUG("   Adrehen Cend");  
         break;}
    case Ckeys:{
-          DEBUG("   Adrehen Ckeys", mystate.DROkey); 
           char axis;
+          float mystateaxis;
           axis = mystate.DROkey / 10 + 'X' -1;
+          DEBUG("   Adrehen Ckeys", mystate.DROkey, axis); 
           if (mystate.grblState == Idle) {        // = 1
               float targetfmin, targetf, targetaxis;
               switch (axis) {
                   case 'X': {targetfmin = target.fxmin;
                             targetf = target.fx;
                             targetaxis = target.x; 
+                            mystateaxis = mystate.x;
                             break;}
                   case 'Y': {targetfmin = target.fymin;
-                            targetf = target.fy;
-                            targetaxis = target.y; 
-                            break;}
+                             targetf = target.fy;
+                             targetaxis = target.y;
+                             mystateaxis = mystate.y; 
+                             break;}
                   case 'Z': {targetfmin = target.fzmin;
                             targetf = target.fz;
-                            targetaxis = target.z; 
+                            targetaxis = target.z;
+                            mystateaxis = mystate.z; 
                             break;}
                   default:  {targetfmin = 100;
                             targetf = 0;
-                            targetaxis = 'C'; 
+                            targetaxis = 'C';
+                            mystateaxis = 0.0;
                             break;}
               }
               sprintf(command, "");                                                      
@@ -459,12 +467,28 @@ void Adrehen(void) {              // Aussendrehen
                   }else{
                       sprintf(command, "G95 F%.3f G90 G01 %c%.3f", targetf, axis, targetaxis);
                   }
-              }else if (mystate.DROkey % 10  == 4)      // right button
-                  sprintf(command, "G00 %c0", axis);     // Verfahren im Eilgang auf 0
+              }else if (mystate.DROkey % 10  == 4 and mystateaxis != 0.0) {     // right button
+                  sprintf(command, "G00 %c0", axis);                            // Verfahren im Eilgang auf 0
+                  sprintf(buffer10, "%.3f", mystateaxis);
+                  switch (axis) {
+                      case 'X': {target.x = mystateaxis;
+                                 Buttons[1].setText(buffer10);
+                                 Buttons[1].show();
+                                 break;}
+                      case 'Y': {target.y = mystateaxis;
+                                 DEBUG('y-Axis not implemented yet');
+                                 break;}
+                      case 'Z': {target.z = mystateaxis;
+                                 Buttons[2].setText(buffer10);
+                                 Buttons[2].show();
+                                 break;}
+                      default:  {
+                                break;}
+                  }
+              }
+              mystate.DROkey = -1;
               serial0_writeLn(command);
               serial_writeLn(command);
-              mystate.DROkey = -1;
-              break;
           }else if (mystate.grblState == Run) { 
               if (mystate.DROkey % 10  == 1){
                   DEBUG("Stop");       
@@ -713,10 +737,15 @@ void Ddefault(void) {              // set default values
            { 40, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0", "F :",                   0}, // 1
            { 60, COLUMN1+0*COLUM_DISTANCE+15, TextColor, "T2", "z",                     0}, // 2           
            {210, COLUMN1+0*COLUM_DISTANCE+5,  TextColor, "T1", "mm/min",                0}, // 3
-           { 40, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0", "F :",                   0}, // 4   
-           {210, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T1", "mm/U",                  0}, // 5                     
-           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 000.000",           WNUM}, // 6   Button Fzmin:
-           {140, COLUMN1+12+1*COLUM_DISTANCE, TextColor, "B",  " ???.000",           WNUM}  // 7   Button Fz default:           
+           {210, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T1", "mm/U",                  0}, // 4
+           { 40, COLUMN1+2*COLUM_DISTANCE,    TextColor, "T0", "F :",                   0}, // 5
+           { 60, COLUMN1+2*COLUM_DISTANCE+15, TextColor, "T2", "x",                     0}, // 6           
+           {210, COLUMN1+2*COLUM_DISTANCE+5,  TextColor, "T1", "mm/min",                0}, // 7
+           {210, COLUMN1+3*COLUM_DISTANCE,    TextColor, "T1", "mm/U",                  0}, // 8                   
+           {140, COLUMN1+12+0*COLUM_DISTANCE, TextColor, "B",  " 000.000",           WNUM}, // 9   Button Fzmin:
+           {140, COLUMN1+12+1*COLUM_DISTANCE, TextColor, "B",  " ???.000",           WNUM}, // 10   Button Fz default:
+           {140, COLUMN1+12+2*COLUM_DISTANCE, TextColor, "B",  " 000.000",           WNUM}, // 11   Button Fxmin:
+           {140, COLUMN1+12+3*COLUM_DISTANCE, TextColor, "B",  " ???.000",           WNUM}  // 12   Button Fx default:         
         };
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
         target.changed = true;
@@ -725,14 +754,19 @@ void Ddefault(void) {              // set default values
      case Crun: {
         if (target.changed) {
             sprintf(buffer10, "%.3f", target.fzmin); Buttons[0].setText(buffer10);
-            sprintf(buffer10, "%.3f", eeprom.fzU);   Buttons[1].setText(buffer10);
+            sprintf(buffer10, "%.3f", target.fz);    Buttons[1].setText(buffer10);
+            sprintf(buffer10, "%.3f", target.fxmin); Buttons[2].setText(buffer10);
+            sprintf(buffer10, "%.3f", target.fx);    Buttons[3].setText(buffer10);
             target.changed = false;
-            Buttons[0].show();
+            Buttons[0].show(); Buttons[1].show(); Buttons[2].show(); Buttons[3].show();
         }
         break;}
   case Cend: {
         DEBUG("   Ddefault: Cend", mystate.bindex, input.fvalue);
-        eeprom.fzmin = target.fzmin;
+        DEBUG("      fz:", target.fzmin, target.fz);
+        DEBUG("      fx:", target.fxmin, target.fx);
+        eeprom.fzmin = target.fzmin; eeprom.fzU = target.fz;
+        eeprom.fxmin = target.fxmin; eeprom.fxU = target.fx;
         eeprom_write();
         break;}
   case Ckeys:{
@@ -858,13 +892,18 @@ void MyDisplay_loop(void){
    }
 }
 
-void drawString (uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint16_t y, const char *string, bool opaque){
+void drawString (uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint16_t y, float value, const char *string, bool opaque){
     if (mystate.state == WDREHEN) {
-        //DEBUG("drawString", x, y, string);
+        //DEBUG("drawString", i, x, y, value, string);
         Display.setFont(*font); 
         Display.setFont(Arial_24);
         Display.setCursor(x, y);
         Flickerlabel[i].print(string);
+        switch (i){
+           case 0 : mystate.x = value;break;
+           case 1 : mystate.y = value;break;         
+           case 2 : mystate.z = value;break;  
+        }    
     }
 }
 

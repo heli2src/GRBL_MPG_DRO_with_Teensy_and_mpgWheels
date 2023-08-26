@@ -108,7 +108,7 @@ static void MPG_ResetPosition (bool await)
 static void displayPosition (uint_fast8_t i){
     if(axis[i].visible) {
         ///CJ setColor(axis[i].dro_lock ? Yellow : White);
-        drawString(i, &POSFONT, POSCOL, axis[i].row, ftoa(grbl_data->position[i] - grbl_data->offset[i], "% 5.3f"), true);
+        drawString(i, &POSFONT, POSCOL, axis[i].row, grbl_data->position[i] - grbl_data->offset[i], ftoa(grbl_data->position[i] - grbl_data->offset[i], "% 5.3f"), true);
         //CJ setColor(White);
     }
 }
@@ -262,7 +262,7 @@ static void displayGrblData (char *line)
 //CJ            if(display_actual || leds.spindle != grbl_data->spindle.on) {
 //CJ                if(display_actual){ 
 //CJ                sprintf(line, "%6.1f", display_actual ? grbl_data->spindle.rpm_actual : mpg_rpm);
-                    drawString(3, &POSFONT,POSCOL+30, 60, ftoa(grbl_data->spindle.rpm_actual, "% 4.0f"), true); 
+                    drawString(3, &POSFONT,POSCOL+30, 60, grbl_data->spindle.rpm_actual, ftoa(grbl_data->spindle.rpm_actual, "% 4.0f"), true); 
 //CJ                lblRPM->widget.fgColor = display_actual ? (grbl_data->spindle.rpm_actual > 2000.0f ? Coral : White) : Coral;
 //CJ                UILibLabelDisplay(lblRPM, line);
             //CJ}
