@@ -262,7 +262,7 @@ static void displayGrblData (char *line)
 //CJ            if(display_actual || leds.spindle != grbl_data->spindle.on) {
 //CJ                if(display_actual){ 
 //CJ                sprintf(line, "%6.1f", display_actual ? grbl_data->spindle.rpm_actual : mpg_rpm);
-                    drawString(3, &POSFONT,POSCOL+30, 60, grbl_data->spindle.rpm_actual, ftoa(grbl_data->spindle.rpm_actual, "% 4.0f"), true); 
+                    drawString(3, &POSFONT,POSCOL+40, 60, grbl_data->spindle.rpm_actual, ftoa(grbl_data->spindle.rpm_actual, "% 4.0f"), true);
 //CJ                lblRPM->widget.fgColor = display_actual ? (grbl_data->spindle.rpm_actual > 2000.0f ? Coral : White) : Coral;
 //CJ                UILibLabelDisplay(lblRPM, line);
             //CJ}
