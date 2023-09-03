@@ -393,17 +393,19 @@ void Adrehen(void) {              // Aussendrehen
     case Cinit: {
         struPage mytext[]= {
            { 10,                           7, TextColor, "T0", "Manuell Drehen",     0}, // 0
-           { 35, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "F :",               0}, // 1
-           { 53, COLUMN1+0*COLUM_DISTANCE+15, TextColor, "T2",  "z",                 0}, // 1
-           {120, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2",  "mm/U",              0}, // 1
-           {195, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "U:",                0}, // 1  
-           { 40, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0",  "X:",                0}, // 1
-           { 40, COLUMN1+2*COLUM_DISTANCE,    TextColor, "T0",  "Z:",                0}, // 1                              
-           {130, COLUMN1+0*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 1   Button Fz:
-           {130, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 2   Button X:
-           {130, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "B",  " 000.000",        WNUM}, // 3   Button Z:
-           { 15, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 4
-           { 15, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 5
+           { 10, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "F :",               0}, // 1
+           { 28, COLUMN1+0*COLUM_DISTANCE+15, TextColor, "T2",  "z",                 0}, // 1
+           { 80, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2",  "target",            0}, // 1
+           {220, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2",  "actual",            0}, // 1
+           {150, COLUMN1+0*COLUM_DISTANCE+10,  TextColor, "T2",  "mm/U",              0}, // 1
+           {205, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "U:",                0}, // 1  
+           { 10, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0",  "X :",                0}, // 1
+           { 10, COLUMN1+2*COLUM_DISTANCE,    TextColor, "T0",  "Z :",                0}, // 1                              
+           {100, COLUMN1+0*COLUM_DISTANCE+12, TextColor, "B",    "00.000",        WNUM}, // 1   Button Fz:
+           {115, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 2   Button X:
+           {115, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "B",  " 000.000",        WNUM}, // 3   Button Z:
+//           { 15, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 4
+//           { 15, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 5
            { 290,                         20, TextColor, "Bk", " M",           WMENUE},  // 6
         };
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
@@ -458,6 +460,7 @@ void Adrehen(void) {              // Aussendrehen
                             targetf = 0;
                             targetaxis = 'C';
                             mystateaxis = 0.0;
+                            return;
                             break;}
               }
               sprintf(command, "");                                                      
@@ -467,8 +470,8 @@ void Adrehen(void) {              // Aussendrehen
                   }else{
                       sprintf(command, "G95 F%.3f G90 G01 %c%.3f", targetf, axis, targetaxis);
                   }
-              }else if (mystate.DROkey % 10  == 4 and mystateaxis != 0.0) {     // right button
-                  sprintf(command, "G00 %c0", axis);                            // Verfahren im Eilgang auf 0
+              }else if (mystate.DROkey % 10  == 4 and mystateaxis != 0.0) {     // right button drive axis to 0
+                  sprintf(command, "G00 %c0", axis);
                   sprintf(buffer10, "%.3f", mystateaxis);
                   switch (axis) {
                       case 'X': {target.x = mystateaxis;
@@ -485,6 +488,9 @@ void Adrehen(void) {              // Aussendrehen
                       default:  {
                                 break;}
                   }
+              }else if (mystate.DROkey % 10  == 8) {                           // right button set axis to 0
+                  DEBUG(" set axis to 0", axis);
+                  sprintf(command, "G92 %c0", axis);
               }
               mystate.DROkey = -1;
               serial0_writeLn(command);
