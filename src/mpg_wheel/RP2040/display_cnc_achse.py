@@ -7,7 +7,12 @@ use https://micropython.org/download/rp2-pico/
    100 PPR Encoder  a -> GP10  (Pin12)
                     b -> GP11  (Pin11)
    
-   4x switch 26, 15, 14, 13  to gnd 
+   4x switch 26, 15, 14, 13  to gnd
+           SW1 = Drive axis:               regMemory[2] = axis*10 + 1
+           SW2 = 0.01/0.1/1.0 mm
+           SW3 = disable/config/joggin
+           SW4 = drive to 0                regMemory[2] = axis*10 + 4
+               = set to 0                  regMemory[2] = axis*10 + 8
    
    RS485           DI  (4) -> GP0 (TX0) Pin1
                    DE  (3) -> VDD          Transceiver Output Enable
@@ -36,10 +41,10 @@ from modbus import Modbus
 import framebuf
 from ws2812 import ws2812
 
-__version__ = "V0.5"
+__version__ = "V0.0.6"
 #Configuration
 AXIS = 0                     # 0 = X, 1 = Y, 2 = Z
-ROTDIR = -1                  # 1 = normal rotary, -1 = invers
+ROTDIR = 1                   # 1 = normal rotary, -1 = invers
 KEYLAYOUT = False            # if False: mirrored switch layout
 #_____________________________
 
@@ -73,7 +78,7 @@ class cnc_axis():
                  0,         # diff time in 100us
                  0,         # switch values
                  0]
-    choiceAxis = ['X', 'Y', 'Z', 'A']
+    choiceAxis = ['X', 'Y', 'Z', 'A']     # X=0, Y=1, Z=2, A=3
     
     def __init__(self, pin_dt, pin_clk, pin_sw1, pin_sw2, pin_sw3, pin_sw4, pin_i2cclk, pin_i2cdt):
         micropython.opt_level(3)
@@ -105,25 +110,25 @@ class cnc_axis():
         #tim = Timer()
         #tim.init(freq=1, mode=Timer.PERIODIC, callback=showValues)
         
-        self.jogmode = 0				# 0-2 : button  disable, jogging, control
+        self.jogmode = 0                # 0-2 : button  disable, jogging, control
                                         # > 10: >4s switch to changing axis
         self.displayChange = True
         self.buttontime = 0        
 
-        self.rotary = Rotary(ROTDIR, pin_dt, pin_clk, pin_sw2)                    # Init Rotary Encoder
+        self.rotary = Rotary(ROTDIR, pin_dt, pin_clk, pin_sw2)                             # Init Rotary Encoder
         self.rotary.add_handler(self.rotary_changed)
         self.valueChange = False
         self.switchtime = 0
         
-        sw1 = Pin(pin_sw1, Pin.IN, Pin.PULL_UP)
+        sw1 = Pin(pin_sw1, Pin.IN, Pin.PULL_UP)                                            # Start/Stop button
         sw1.irq(handler=self.sw1_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
         sw3 = Pin(pin_sw3, Pin.IN, Pin.PULL_UP)
         sw3.irq(handler=self.sw3_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
-        sw4 = Pin(pin_sw4, Pin.IN, Pin.PULL_UP)
+        sw4 = Pin(pin_sw4, Pin.IN, Pin.PULL_UP)                                            # drive axis to 0/set axis to 0
         sw4.irq(handler=self.sw4_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
 
         self.client = Modbus(port=0, slaveaddress=AXIS+1, baudrate=38400, debug=False)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
-                                                                         # should be einstellbar über EEPROM ?!
+                                                                                           # should be adjustable with EEPROM ?!
         self.client.regMemory = self.regMemory
         self.noConnectionTime = -5
 
@@ -138,7 +143,7 @@ class cnc_axis():
         self.display.fill(0)                       # ~865us
         # Blit the image from the framebuffer to the oled display
         self.display.blit(fb, 96, 18)
-        self.display.text(f"Heli2    {__version__}", 10, 10)
+        self.display.text(f"Heli2   {__version__}", 10, 10)
         for y in range(20, 60, 10):
             self.display.show()                    # ~50760us,   interrupt form rotary will blocked :-(
             utime.sleep_ms(500)
@@ -147,6 +152,7 @@ class cnc_axis():
         self.wdt = WDT(timeout=1000)  # enable Watchdog, with a timeout of 1s
 
     def sw1_irq(self, pin):
+        ''' Start/Stop button'''
         value = pin.value()
         if value== 0:
             self.buttontime = utime.ticks_ms()
@@ -186,6 +192,7 @@ class cnc_axis():
             print(f'       config {dtime}')
 
     def sw4_irq(self, pin):
+        ''' Drive axis to 0/set axis to 0'''
         value = pin.value()
         if value== 0:
             self.buttontime = utime.ticks_ms()
@@ -196,7 +203,12 @@ class cnc_axis():
         if value == 1 and (dtime > 100 and dtime < 900):
             value = value * 4 + (AXIS+1) *10
             self.regMemory[2] = value
-            print(f'       sw4 ={value}')
+            # print(f'       sw4 ={value}')
+            self.switchtime = utime.ticks_ms()
+        elif value == 1 and (dtime > 900 and dtime < 3000):
+            value = value * 8 + (AXIS+1) *10
+            self.regMemory[2] = value
+            # print(f'       sw4 ={value}')
             self.switchtime = utime.ticks_ms()
 
     def rotary_changed(self, value):
@@ -206,7 +218,7 @@ class cnc_axis():
         if self.incValue != value[0][2]:
             self.incValue = value[0][2]
             self.displayChange = True
-        #self.dprint(f'changed {self.regMemory}')
+        self.dprint(f'changed {self.regMemory}')
             
     def display_page1(self):
         self.display.fill(0)
@@ -235,7 +247,7 @@ class cnc_axis():
     def loop(self):
         if utime.ticks_us() - self.lasttime > 500:              # call every 500us
             self.lasttime = utime.ticks_us()
-            result = self.client.receive()                      # read bus
+            result = self.client.receive()                      # read modbus
             if result is None:
                 self.noConnectionTime += 1
                 if 5000 > self.noConnectionTime > 1000 or self.noConnectionTime < 0:
