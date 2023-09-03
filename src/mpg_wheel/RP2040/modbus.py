@@ -1,6 +1,6 @@
 """
 
-started from https://github.com/pyhys/minimalmodbus
+some points from https://github.com/pyhys/minimalmodbus
 """
 
 __author__ = "Christian Jung"
@@ -45,13 +45,14 @@ _CRC16TABLE = (
 
 # Several instrument instances can share the same serialport
 _serialports = {}  # Key: port name (str), value: port instance
-_latest_read_times = {}  # Key: port name (str), value: timestamp (float)
+_latest_read_times_byte = {}  # Key: port name (str), value: timestamp (float)
 
 
 class Modbus:
     """Modbus for slaves.
 
     Uses the Modbus RTU or ASCII protocols (via RS485 or RS232).
+    1 Start-bit, 8 Data bits, 1 Stop-bit = 10 Bits
 
     Args:
         * port (str): The serial (Uart) port 0/1.
@@ -110,7 +111,8 @@ class Modbus:
         else:
             self._print_debug("Serial port {} already exists".format(port))
             self.serial = _serialports[port]
-        self._latest_read_times = 0
+        self._latest_read_times_byte = 0
+        self._latest_read_times_protocol = 0
         self.timeout_time = int(1750 * 3.5 )
         self.count = 0
         self.rw = 1
@@ -170,24 +172,24 @@ class Modbus:
         rxData = None
         if self.serial.any() > 0:
             rxData = self.serial.read(1)
-            self._latest_read_times = utime.ticks_us()
+            self._latest_read_times_byte = utime.ticks_us()
         return rxData
 
     def rxAny(self):
         rxData = bytes()
         while self.serial.any() > 0:
             rxData += self.serial.read(1)
-            self._latest_read_times = utime.ticks_us()
+            self._latest_read_times_byte = utime.ticks_us()
         return rxData
     
     def receive(self):
-        if utime.ticks_us()-self._latest_read_times>self.timeout_time:          
+        if utime.ticks_us()-self._latest_read_times_byte>self.timeout_time:           # hit timeout 
             self.rxbuffer = bytes()
             self.count = 0
             # self.dprint(f'{self.__class__.__name__}.receive: timeout > {self.timeout_time}')
         rxData = self.rxChar()
         if rxData is not None and self.count != -20:
-            self.dprint(f'{self.count}: {rxData}')
+            #self.dprint(f'{self.count}: {rxData}')
             self.rxbuffer += rxData
             self.count += 1
             if self.count==1 and self.rxbuffer[0] == self.address:
@@ -204,7 +206,8 @@ class Modbus:
                     return self.send_dat(regaddr, regcnt)
                 else:
                     self.error = _errortype[0]
-                    print(self.error)
+                    self.dprint(f'{self.error} {self.rxbuffer}') 
+                    # print(self.error)
                 self.count = 0
                 self.rxbuffer = bytes()
             elif self.rw==0 and self.count > 9:
@@ -221,7 +224,8 @@ class Modbus:
             datum += dat.to_bytes(2,'big')
         answer += datum
         answer += self._calculate_crc_string(answer).to_bytes(2,'little')        
-        self.dprint(f'read adr={regaddr}, {regcnt}-> send {answer}')
+        self.dprint(f'{self._latest_read_times_byte-self._latest_read_times_protocol} read adr={regaddr}, {regcnt}-> send {answer}')
+        self._latest_read_times_protocol = self._latest_read_times_byte
         self.txmsg(answer)
         return datum
         

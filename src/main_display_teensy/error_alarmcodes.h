@@ -39,8 +39,8 @@ structAlarmcodes errorcodes []= {
   {"","ok", "Setting disabled,Homing cycle failure. Homing is not enabled via settings."}, //5
   {"","ok", "Value < 3 usec,Minimum step pulse time must be greater than 3usec."},  //6
   {"","ok", "EEPROM read fail.\nUsing defaults,An EEPROM read failed. Auto-restoring affected EEPROM to default values."}, //7
-  {"","ok", "Not idle,Grbl '$' command cannot be used unless Grbl is IDLE. Ensures smooth operation during a job."},      //8
-  {"","ok", "G-code lock,G-code commands are locked out during alarm or jog state."},  //8
+  {"","Reset", "Not idle,Grbl '$'\ncommand cannot be\nused unless Grbl is\nIDLE. Ensures smooth\n operation during a job."},      //8
+  {"","Reset", "G-code lock,\nG-code commands are\nlocked out during alarm\n or jog state."},  //8
   {"","ok", "Homing not enabled,Soft limits cannot be enabled without homing also enabled."},  //9
   {"","ok", "Line overflow,Max characters per line exceeded. Received command line was not executed."},  //10
   {"","ok", "Step rate > 30kHz,Grbl '$' setting value cause the step rate to exceed the maximum supported."},  //11
@@ -53,33 +53,33 @@ structAlarmcodes errorcodes []= {
   {"","ok", "Non positive value"}, //18
   {"","ok", "Unsupported command,\nUnsupported or invalid\ng-code command found\nin block."},   //19
   {"","ok", "Modal group violation,\nMore than one g-code command\nfrom same modal group found in block."}, //20
-  {"","ok", "Undefined feed rate,\nFeed rate has not yet been set\nor is undefined."},   //21
+  {"","ok", "Undefined feed rate,\nFeed rate has not yet\nbeen set nor is\nundefined."},   //21
   {"","ok", "Invalid gcode ID:23,\nG-code command in block\nrequires an integer value."},  //22
   {"","ok", "Invalid gcode ID:24,\nMore than one g-code command\nthat requires axis words found in block."},  //23
   {"","ok", "Invalid gcode ID:25,\nRepeated g-code word found\nin block."}, //24
-  {"","ok", "Invalid gcode ID:26,\nNo axis words found in\nblock for g-code command or current modal state which requires them."},   //25
+  {"","ok", "Invalid gcode ID:26,\nNo axis words found in\nblock for g-code command\nor current modal state which\nrequires them."},   //25
   {"","ok", "Invalid gcode ID:27,\nLine number value is\ninvalid."},   //26
   {"","ok", "Invalid gcode ID:28,\nG-code command is missing\na required value word."},   //17
   {"","ok", "Invalid gcode ID:29,\nG59.x work coordinate\nsystems are not supported."},   //28
   {"","ok", "Invalid gcode ID:30,\nG53 only allowed with G0 and\nG1 motion modes."},      //29
-  {"","ok", "Invalid gcode ID:31,\nAxis words found in block\nwhen no command or current modal state uses them."},  //30
+  {"","ok", "Invalid gcode ID:31,\nAxis words found in block\nwhen no command or current\nmodal state uses them."},  //30
   {"","ok", "Invalid gcode ID:32,\nG2 and G3 arcs require at\nleast one in-plane axis word."},   //31
   {"","ok", "Invalid gcode ID:33,\nMotion command target is\ninvalid."},    //32
   {"","ok", "Invalid gcode ID:34,\nArc radius value is invalid."},         //33
-  {"","ok", "Invalid gcode ID:35,\nG2 and G3 arcs require at least one in-plane offset word."},    //34}
+  {"","ok", "Invalid gcode ID:35,\nG2 and G3 arcs require at least\none in-plane offset word."},    //34}
   {"","ok", "Invalid gcode ID:36,\nUnused value words found in block."},    //35
-  {"","ok", "Invalid gcode ID:37,\nG43.1 dynamic tool length offset is not assigned to configured tool length axis."},   //36
-  {"","ok", "Invalid gcode ID:38,\nTool number greater than max supported value or undefined tool selected."},           //37
+  {"","ok", "Invalid gcode ID:37,\nG43.1 dynamic tool length\noffset is not assigned\nto configured tool length axis."},   //36
+  {"","ok", "Invalid gcode ID:38,\nTool number greater than\nmax supported value or\nundefined tool selected."},           //37
   {"","ok", "Invalid gcode ID:39,\nValue out of range."},    //38
-  {"","ok", "Invalid gcode ID:40,\nG-code command not allowed when tool change is pending."},   //39
-  {"","ok", "Invalid gcode ID:41,\nSpindle not running when motion commanded in CSS or spindle sync mode."},    //40
+  {"","ok", "Invalid gcode ID:40,\nG-code command not allowed\nwhen tool change is pending."},   //39
+  {"","ok", "Invalid gcode ID:41,\nSpindle not running when\nmotion commanded in CSS\nor spindle sync mode."},    //40
   {"","ok", "Invalid gcode ID:42,\nPlane must be ZX for threading."},   //41
   {"","ok", "Invalid gcode ID:43,\nMax. feed rate exceeded."},          //42
   {"","ok", "Invalid gcode ID:44,\nRPM out of range."},                 //43
-  {"","ok", "Limit switch engaged,\nOnly homing is allowed when a limit switch is engaged."},    //44
+  {"","ok", "Limit switch engaged,\nOnly homing is allowed when\na limit switch is engaged."},    //44
   {"","ok", "Homing required,\nHome machine to continue."},             //45
-  {"","ok", "Invalid gcode ID:47,\nATC: current tool is not set. Set current tool with M61."},   //46
-  {"","ok", "Invalid gcode ID:48,\nValue word conflict."},              //47
+  {"","ok", "Invalid gcode ID:47,\nATC: current tool is not set.\n Set current tool with M61."},   //46
+  {"","ok", "Invalid gcode ID:48,\nValue word conflict."},             //47
   {"","ok", "E-stop,Emergency stop active."},                         //48
   {"","ok", "Error 49"},   //49
   {"","ok", "SD Card,SD Card mount failed."},                         //50
