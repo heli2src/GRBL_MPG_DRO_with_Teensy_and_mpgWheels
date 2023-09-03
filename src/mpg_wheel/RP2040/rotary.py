@@ -12,7 +12,7 @@ class Rotary:
 #    SW_RELEASE = 8
     debounceThreshold = 700
     
-    def __init__(self, increment, dt, clk, sw):
+    def __init__(self, vzincrement, dt, clk, sw):
         self.dt_pin = Pin(dt, Pin.IN, Pin.PULL_UP)
         self.clk_pin = Pin(clk, Pin.IN, Pin.PULL_UP)
         self.sw_pin = Pin(sw, Pin.IN, Pin.PULL_UP)
@@ -26,7 +26,8 @@ class Rotary:
         self.debounceLast = 0
         self.buttontime = 0
         self.arg = array.array('i',[0, 0, 1])
-        self.increment = increment
+        self.increment = abs(vzincrement)
+        self.vzincrement = vzincrement
         self._enable = False
         
     def enable(self, value):
@@ -43,9 +44,9 @@ class Rotary:
         if not self._enable:
             return
         if transition == 0b1110:
-            self.arg[0] -= self.increment
+            self.arg[0] -= self.increment * self.vzincrement
         elif transition == 0b1101:
-            self.arg[0] += self.increment    
+            self.arg[0] += self.increment * self.vzincrement   
         if transition == 0b1110 or transition == 0b1101:
             self.newtime = utime.ticks_us()
             diff = utime.ticks_diff(self.newtime, self.lasttime)
