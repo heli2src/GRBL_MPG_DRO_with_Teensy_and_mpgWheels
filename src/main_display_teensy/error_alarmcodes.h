@@ -32,7 +32,7 @@ structAlarmcodes alarmcodes []= {
 
 structAlarmcodes errorcodes []= {
   {"","ok", "unknown Error :-( "},                                                                            //0
-  {"","ok", "Expected command letter,\nG-code words consist of a\nletter and a value.\nLetter was not found."},    //1
+  {"","ok", "Expected command letter,\nG-code words consist of\na letter and a value.\nLetter was not found."},    //1
   {"","ok", "Bad number format,\nMissing the expected\nG-code word value\nor numeric value format\nis not valid."}, //2
   {"","ok", "Invalid statement,\nGrbl '$' system command\nwas not recognized or\nsupported."},  //3
   {"","ok", "Value < 0,Negative value\nreceived for an expected\npositive value."}, //4
@@ -47,7 +47,7 @@ structAlarmcodes errorcodes []= {
   {"","ok", "Check Door,Safety door detected as opened and door state initiated."},  //12
   {"","ok", "Line length exceeded,Build info or startup line exceeded EEPROM line length limit. Line not stored."}, //13
   {"","Reset", "Travel exceeded, Jog\ntarget exceeds machine\ntravel. Jog command \nhas been ignored."},   //14
-  {"","ok", "Invalid jog command,\nJog command has no '=' or\ncontains prohibited g-code."},  //15
+  {"","ok", "Invalid jog command,\nJog command has no\n'=' or contains prohibited\ng-code."},  //15
   {"","ok", "Setting disabled,\nLaser mode requires PWM output."},  //16
   {"","ok", "Reset asserted,"}, //17
   {"","ok", "Non positive value"}, //18
@@ -59,7 +59,7 @@ structAlarmcodes errorcodes []= {
   {"","ok", "Invalid gcode ID:25,\nRepeated g-code word found\nin block."}, //24
   {"","ok", "Invalid gcode ID:26,\nNo axis words found in\nblock for g-code command\nor current modal state which\nrequires them."},   //25
   {"","ok", "Invalid gcode ID:27,\nLine number value is\ninvalid."},   //26
-  {"","ok", "Invalid gcode ID:28,\nG-code command is missing\na required value word."},   //17
+  {"","ok", "Invalid gcode ID:28,\nG-code command is\nmissing a required value\nword."},   //17
   {"","ok", "Invalid gcode ID:29,\nG59.x work coordinate\nsystems are not supported."},   //28
   {"","ok", "Invalid gcode ID:30,\nG53 only allowed with G0 and\nG1 motion modes."},      //29
   {"","ok", "Invalid gcode ID:31,\nAxis words found in block\nwhen no command or current\nmodal state uses them."},  //30
