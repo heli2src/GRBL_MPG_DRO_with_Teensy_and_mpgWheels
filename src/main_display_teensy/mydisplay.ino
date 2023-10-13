@@ -908,7 +908,8 @@ void drawString (uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint
         switch (i){
            case 0 : mystate.x = value;break;
            case 1 : mystate.y = value;break;         
-           case 2 : mystate.z = value;break;  
+           case 2 : mystate.z = value;break; 
+           case 3 : mystate.rpm = value; break; 
         }    
     }
 }
@@ -954,15 +955,18 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
         unsigned long time = millis();
         unsigned long dtime = time-mystate.mpgtime[index];
         mystate.mpgtime[index] = time;   
-        // 
-        // todo:  for better and smoother driving evaluate MPGdtime (it is the time beetween 2 handwheel pulses)
         if (abs(MPGcnt) < 5) speed = eeprom.fzjog001;
         else if (abs(MPGcnt) < 20) speed = eeprom.fzjog01;
         else speed = eeprom.fzjog1;
-        //  speed = 600.0 * float(abs(MPGcnt)) / float(dtime);        // 60*1000 MPGcnt *0.01 / (millis() - oldmillis)  				= mm/min
-        sprintf(command, "$J=G91 %c%.3f F%.1f", MPGkey, float(MPGcnt)*0.01, speed);   //e.q. $J=G91 Z1.000 F100.0   G91 = relative movement 
+        //  speed = 600.0 * float(abs(MPGcnt)) / float(dtime);        // 60*1000 MPGcnt *0.01 / (millis() - oldmillis)          = mm/min
+        // todo:  for better and smoother driving evaluate MPGdtime (it is the time beetween 2 handwheel pulses) 
+        if (mystate.rpm > 0.0) { 
+             speed = speed / 10;
+        }
+        // in mpg mode G95 is not allowed :-(
+        sprintf(command, "$J=G91 %c%.3f F%.1f", MPGkey, float(MPGcnt)*0.01, speed);   //e.q. $J=G91 Z1.000 F100.0   # G91 = relative movement
         serial_writeLn(command);
-        DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, command);      
+        DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, mystate.rpm, command);      
     } 
 }
 

@@ -2,7 +2,12 @@
 Handwheel with Encoder + Rasperry Pi Pico Zero
 
 use https://micropython.org/download/rp2-pico/
-        MicroPython v1.20.0 on 2023-04-26; Raspberry Pi Pico with RP2040    
+        MicroPython v1.20.0 on 2023-04-26; Raspberry Pi Pico with RP2040
+        
+    install necessary libs from https://github.com/micropython/micropython-lib:   (from your python shell and pip install mpremote)
+        see https://docs.micropython.org/en/latest/reference/mpremote.html 
+        C:\\Users\\model\\AppData\\Roaming\\Python\\Python39\\Scripts\\mpremote mip install ssd1306
+
 
    100 PPR Encoder  a -> GP10  (Pin12)
                     b -> GP11  (Pin11)
@@ -36,16 +41,16 @@ import utime
 import micropython
 from machine import Pin, I2C, Timer, WDT, freq as CPUfreq
 from rotary import Rotary
-from ssd1306 import SSD1306_I2C
+from lib.ssd1306 import SSD1306_I2C
 from modbus import Modbus
 import framebuf
 from ws2812 import ws2812
 
-__version__ = "V0.0.6"
+__version__ = "V0.0.7"
 #Configuration
 AXIS = 0                     # 0 = X, 1 = Y, 2 = Z
 ROTDIR = 1                   # 1 = normal rotary, -1 = invers
-KEYLAYOUT = False            # if False: mirrored switch layout
+KEYLAYOUT = True            # if False: mirrored switch layout
 #_____________________________
 
 # GPIOs Rotary Encoder
@@ -101,7 +106,7 @@ class cnc_axis():
         self.display = SSD1306_I2C(128, 64, i2c)                         # use 1kb = 128 x 64/8
                                                                          #  0- 47 blue
                                                                          # 48- 63 yellow         
-        if self.display.notFound:
+        if self.display is None:                        # .notFound:
             from ssd1306_dummy import SSD1306_dummy
             self.display = SSD1306_dummy()
             print('SSD1306 not found')
@@ -218,7 +223,7 @@ class cnc_axis():
         if self.incValue != value[0][2]:
             self.incValue = value[0][2]
             self.displayChange = True
-        self.dprint(f'changed {self.regMemory}')
+        # self.dprint(f'rotary_changed {self.regMemory}')
             
     def display_page1(self):
         self.display.fill(0)
@@ -259,6 +264,9 @@ class cnc_axis():
                 self.noConnectionTime = 0
             if self.valueChange:
                 self.dprint(f'change {self.regMemory}')
+                self.display.text('*', 1, statusline-10)
+                self.display.show()
+                self.display_page1()
                 self.valueChange = False
             if self.switchtime>0 and utime.ticks_ms() - self.switchtime > 500:
                 print("switch = 0")
