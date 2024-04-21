@@ -16,6 +16,9 @@ Source code not ready yet, there are some bugs, use it carfully!
 <img src="docs/images/dev_1.jpg"></img>
 <br><br><br>
 ## Compiling
+
+### - Teensy for the touch display:
+
 you have to use the arduino version 1.8.19. With the latest compiler 2.x, you get compiler errors.
 
 Following libs are used:
@@ -23,5 +26,15 @@ Following libs are used:
 - https://github.com/KrisKasprzak/ILI9341_t3_controls
 - https://github.com/KrisKasprzak/ILI9341_t3_Menu
 - https://github.com/ardnew/XPT2046_Calibrated
-- Bugtton      Version 1.0.5
-- MicroDebug   Version 1.1
+- [Bugtton](https://github.com/sakabug/Bugtton)      Version 1.0.5
+- [MicroDebug](https://github.com/rlogiacco/MicroDebug)   Version 1.1
+
+### - Raspi pico for the mpg wheels:
+- download the latest micropython version from  https://micropython.org/download/RPI_PICO/.
+- Hold down the BOOTSEL button while plugging the board into USB.
+  The uf2 file should then be copied to the USB mass storage device that appears.
+- Copy the files src\mpg_wheel\RP2040 with the Thonny IDE (https://thonny.org/) to your raspi pico.
+- or you can use https://docs.micropython.org/en/latest/reference/mpremote.html 
+- rename 'display_cnc_achse.py' to 'main.py' on the raspi pico
+
+  

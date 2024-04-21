@@ -2,7 +2,7 @@
 Handwheel with Encoder + Rasperry Pi Pico Zero
 
 use https://micropython.org/download/rp2-pico/
-        MicroPython v1.20.0 on 2023-04-26; Raspberry Pi Pico with RP2040
+        MicroPython:  RPI_PICO-20240222-v1.22.2
         
     install necessary libs from https://github.com/micropython/micropython-lib:   (from your python shell and pip install mpremote)
         see https://docs.micropython.org/en/latest/reference/mpremote.html 
@@ -31,96 +31,141 @@ use https://micropython.org/download/rp2-pico/
     WS2812 LED :      -> GP16    
     
     todo:
-       - AXIS should get from the eeprom lib (emulated)
+       - add changing axis with buttons
+       - disable button im setup mode
        - use dma for the data from SSD1306
        - display values from the axis
        - control mode only dummy yet
                    
 '''
+import os
 import utime
 import micropython
-from machine import Pin, I2C, Timer, WDT, freq as CPUfreq
-from rotary import Rotary
-from lib.ssd1306 import SSD1306_I2C
-from modbus import Modbus
 import framebuf
-from ws2812 import ws2812
+from machine import Pin, I2C, Timer, WDT, freq as CPUfreq
+from lib.eeprom import EEPROM
+from lib.rotary import Rotary
+from lib.ssd1306 import SSD1306_I2C
+from lib.modbus import Modbus
+from lib.ws2812 import ws2812
 
-__version__ = "V0.0.7"
+__version__ = "V0.0.8"
 #Configuration
-AXIS = 0                     # 0 = X, 1 = Y, 2 = Z
-ROTDIR = 1                   # 1 = normal rotary, -1 = invers
-KEYLAYOUT = True            # if False: mirrored switch layout
 #_____________________________
 
 # GPIOs Rotary Encoder
 PIN_DT = 10
 PIN_CLK = 11
 
-if KEYLAYOUT:
-    PIN_SW1 = 26          # Start/Stop
-    PIN_SW2 = 15          # choice incValue
-    PIN_SW3 = 14          # disable, jog-mode, control mode
-    PIN_SW4 = 13          # set to zero
-else:
-    PIN_SW1 = 13          # Start/Stop
-    PIN_SW2 = 14          # choice incValue
-    PIN_SW3 = 15          # disable, jog-mode, control mode
-    PIN_SW4 = 26          # set to zero     
-
 # GPIOs Display 1306 with I2C
 PIN_I2CCLK = 9
 PIN_I2CDT = 8
 
-statusline = 48
+statusline = 52
+linedistance = 10
+cursorposition = 88
+cursorlinemax = 3
+
+
+# 'EEPROM'
+eeprom_values = {'display': {'rotate': False,
+                             'invert': False},
+                 'rotary': 1,                        # 1 = normal rotary, -1 = invers
+                 'axis': 1,                          # 0 = X, 1 = Y, 2 = Z
+                 'keylayout': False                  # 
+                }
+
+
+class Cursor():
+    
+    def __init__(self, display, blinktime = 500):
+        self.display = display
+        self.blinktime = blinktime
+        self.cursor = False
+        self.cursorticks = utime.ticks_ms()
+        self.line = 0
+        
+    def blink(self, page):
+        #if self._line != line:
+         #   self.display.hline(x+10, line*linedistance+8, 8, False)
+         #   self.line = line
+        if page != 2:
+            return
+        if utime.ticks_ms() - self.cursorticks > self.blinktime:
+            self.display.hline(cursorposition, self.line*linedistance+8, 8, self.cursor)    # ~67us blocking                    
+            self.display.show()                                           # ~25.85 ms blocking !!          
+            self.cursor = not self.cursor
+            self.cursorticks = utime.ticks_ms()
+
+    def incline(self):
+        self.display.hline(cursorposition, self.line*linedistance+8, 8, False)
+        self.cursor = True
+        self.line += 1
+        if self.line == cursorlinemax:
+            self.line = 0
 
 
 class cnc_axis():
-    
-    axis = 0           # todo: read from eeprom        
     
     regMemory = [0,         # absolut cnt
                  0,         # diff time in 100us
                  0,         # switch values
                  0]
-    choiceAxis = ['X', 'Y', 'Z', 'A']     # X=0, Y=1, Z=2, A=3
+    choice = {'Axis': ['X', 'Y', 'Z', 'A'],     # X=0, Y=1, Z=2, A=3
+              }
     
-    def __init__(self, pin_dt, pin_clk, pin_sw1, pin_sw2, pin_sw3, pin_sw4, pin_i2cclk, pin_i2cdt):
+    def __init__(self):
+        self.debug = True
         micropython.opt_level(3)
         # micropython.alloc_emergency_exception_buf(100)
         CPUfreq(125_000_000)
-        
+        self.eeprom = EEPROM()
+        if not self.eeprom.exist():
+            self.eeprom_default(self.eeprom)
+
         if ws2812:
             self.led = ws2812(16)
             self.led.on()
         else:            
             self.led = Pin(25, Pin.OUT)
             self.led.value(0)
-        
-        self.debug = True
 
         # init display
         # i2c write is blocking :-(
         # use dma? see example https://github.com/raspberrypi/pico-examples/blob/master/dma/control_blocks/control_blocks.c
-        i2c = I2C(0, scl=Pin(pin_i2cclk), sda=Pin(pin_i2cdt), freq=200_000)
-        self.display = SSD1306_I2C(128, 64, i2c)                         # use 1kb = 128 x 64/8
-                                                                         #  0- 47 blue
-                                                                         # 48- 63 yellow         
-        if self.display is None:                        # .notFound:
-            from ssd1306_dummy import SSD1306_dummy
+        i2c = I2C(0, scl=Pin(PIN_I2CCLK), sda=Pin(PIN_I2CDT), freq=200_000)
+        self.display = SSD1306_I2C(128, 64, i2c)        # use 1kb = 128 x 64/8: 0- 47 blue, 48- 63 yellow         
+        if self.display is None:                        # if display not found:
+            from lib.ssd1306_dummy import SSD1306_dummy
             self.display = SSD1306_dummy()
             print('SSD1306 not found')
-        #self.display.invert(True)
-        self.display.rotate(False)
+        self.cursor = Cursor(self.display)
+        self.setdisplay_choice = 0
+        self.init()
+            
+    def init(self):
+        if self.eeprom.values['keylayout']:
+            pin_sw1 = 26          # Start/Stop
+            pin_sw2 = 15          # choice incValue
+            pin_sw3 = 14          # disable, jog-mode, control mode or switch to setup page
+            pin_sw4 = 13          # set to zero
+        else:
+            pin_sw1 = 13          # Start/Stop
+            pin_sw2 = 14          # choice incValue
+            pin_sw3 = 15          # disable, jog-mode, control mode or switch to setup page
+            pin_sw4 = 26          # set to zero     
+        
+        self.axis = self.eeprom.values['axis']                     # 0 = X, 1 = Y, 2 = Z
+        self.display.invert(self.eeprom.values['display']['invert'])
+        self.display.rotate(self.eeprom.values['display']['rotate'])
         #tim = Timer()
         #tim.init(freq=1, mode=Timer.PERIODIC, callback=showValues)
         
-        self.jogmode = 0                # 0-2 : button  disable, jogging, control
-                                        # > 10: >4s switch to changing axis
+        self.jogmode = 0                # 0-2 : button  disable, jogging, control, > 10: >4s switch to changing axis
         self.displayChange = True
         self.buttontime = 0        
 
-        self.rotary = Rotary(ROTDIR, pin_dt, pin_clk, pin_sw2)                             # Init Rotary Encoder
+        self.rotary = Rotary(self.eeprom.values['rotary'], PIN_DT, PIN_CLK, pin_sw2)      # Init Rotary Encoder, sw=choice increment 
         self.rotary.add_handler(self.rotary_changed)
         self.valueChange = False
         self.switchtime = 0
@@ -132,8 +177,7 @@ class cnc_axis():
         sw4 = Pin(pin_sw4, Pin.IN, Pin.PULL_UP)                                            # drive axis to 0/set axis to 0
         sw4.irq(handler=self.sw4_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
 
-        self.client = Modbus(port=0, slaveaddress=AXIS+1, baudrate=38400, debug=False)     # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
-                                                                                           # should be adjustable with EEPROM ?!
+        self.client = Modbus(port=0, slaveaddress=self.axis+1, baudrate=38400, debug=False) # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
         self.client.regMemory = self.regMemory
         self.noConnectionTime = -5
 
@@ -148,13 +192,20 @@ class cnc_axis():
         self.display.fill(0)                       # ~865us
         # Blit the image from the framebuffer to the oled display
         self.display.blit(fb, 96, 18)
-        self.display.text(f"Heli2   {__version__}", 10, 10)
-        for y in range(20, 60, 10):
-            self.display.show()                    # ~50760us,   interrupt form rotary will blocked :-(
-            utime.sleep_ms(500)
-            self.display.text("Heli2", y, y)       # ~310us
+        self.display.text(f"       {__version__}", 10, 4)
+        for y in range(4, 40, 10):
+            self.display.text("Heli", y, y)       # ~310us
+            self.display.text("2", y+33, y-4)
+            self.display.show()                   # ~50760us,   interrupt form rotary will blocked :-(
+            utime.sleep_ms(800)
         utime.sleep_ms(500)
+        self.page = 1
         self.wdt = WDT(timeout=1000)  # enable Watchdog, with a timeout of 1s
+        
+    def eeprom_default(self, eeprom):
+        eeprom.values = eeprom_values
+        eeprom.write()
+        print('eeprom set to default values')
 
     def sw1_irq(self, pin):
         ''' Start/Stop button'''
@@ -165,13 +216,16 @@ class cnc_axis():
         if self.buttontime == 0:
             return
         dtime = utime.ticks_ms()- self.buttontime
-        if value == 1 and (dtime > 100 and dtime < 900):
-            value = value + (AXIS+1) *10
+        if self.jogmode < 10 and value == 1 and (dtime > 100 and dtime < 900):
+            value = value + (self.axis+1) *10
             self.regMemory[2] = value
             print(f'       sw1 ={value}')  
             self.switchtime = utime.ticks_ms()
 
     def sw3_irq(self, pin):
+        """
+        Choose: Disable/jog-mode/control mode or switch to setup page (push button >4s)
+        """
         value = pin.value()
         if value== 0:
             self.buttontime = utime.ticks_ms()
@@ -180,20 +234,22 @@ class cnc_axis():
             return
         dtime = utime.ticks_ms()- self.buttontime
         if value == 1 and (dtime > 100 and dtime < 500):
-            if self.jogmode >= 10 and self.jogmode-9 < len(self.choiceAxis):
-                self.jogmode += 1
-            elif self.jogmode >= 10:
-                self.jogmode = 10
-            elif self.jogmode < 2:
+            if self.jogmode >= 10 and self.jogmode-9 < len(self.choice['Axis']):
+                self.cursor.incline()
+            elif self.jogmode < 2:             # next state: Disable/jog-mode/control mode
                 self.jogmode += 1
             else:
-                self.jogmode = 0
+                self.jogmode = 0               # or start from begin
             self.displayChange = True
             self.buttontime = 0
-        elif value == 1 and (dtime > 3000):
+        elif value == 1 and (dtime > 2000):                      # call or return from Setup page
             self.buttontime = 0
             self.displayChange = True
             self.jogmode = 0 if self.jogmode >= 10 else 10
+            if self.jogmode == 0:
+                self.eeprom.write()
+                print(f'       write eeprom')
+                # self.init()
             print(f'       config {dtime}')
 
     def sw4_irq(self, pin):
@@ -205,29 +261,34 @@ class cnc_axis():
         if self.buttontime == 0:
             return
         dtime = utime.ticks_ms()- self.buttontime
-        if value == 1 and (dtime > 100 and dtime < 900):
-            value = value * 4 + (AXIS+1) *10
-            self.regMemory[2] = value
-            # print(f'       sw4 ={value}')
-            self.switchtime = utime.ticks_ms()
-        elif value == 1 and (dtime > 900 and dtime < 3000):
-            value = value * 8 + (AXIS+1) *10
-            self.regMemory[2] = value
-            # print(f'       sw4 ={value}')
-            self.switchtime = utime.ticks_ms()
+        if self.jogmode < 10:
+            if value == 1 and (dtime > 100 and dtime < 900):
+                value = value * 4 + (self.axis+1) *10
+                self.regMemory[2] = value
+                # print(f'       sw4 ={value}')
+                self.switchtime = utime.ticks_ms()
+            elif value == 1 and (dtime > 900 and dtime < 3000):
+                value = value * 8 + (self.axis+1) *10
+                self.regMemory[2] = value
+                # print(f'       sw4 ={value}')
+                self.switchtime = utime.ticks_ms()
 
     def rotary_changed(self, value):
+        if self.jogmode >= 10:
+            self.setdisplay_choice = True
+            return
         self.regMemory[0] = value[0][0]                           # absolut cnt
         self.regMemory[1] = value[0][1]  // 100                   # diff time in 100us
         self.valueChange = True
         if self.incValue != value[0][2]:
             self.incValue = value[0][2]
             self.displayChange = True
-        # self.dprint(f'rotary_changed {self.regMemory}')
+        # self.dprint(f'rotary_changed {self.jogmode}  {self.regMemory}')
             
     def display_page1(self):
+        self.page = 1
         self.display.fill(0)
-        self.display.text(f'{self.choiceAxis[AXIS]}-axis', 0, 0)
+        self.display.text(f'{self.choice["Axis"][self.axis]}-axis', 0, 0)
         if self.noConnectionTime > 4000:
             self.display.text('no connection', 20, 10)
         else:
@@ -241,13 +302,43 @@ class cnc_axis():
         self.displayChange = False
         
     def display_page2(self):
-        print("display_page2")
+        print(f"display_page2 {self.jogmode}")
+        self.page = 2
         self.display.fill(0)
-        AXIS = self.jogmode-10
-        text = f'axis = {self.choiceAxis[AXIS]}'
-        self.display.text(text, 20, statusline-20)
+        self.rotary.enable(True)
+        text = f'Axis:      {self.choice["Axis"][self.axis]}'
+        self.display.text(text, 0, 0)
+        text = f'Wheel:     {self.eeprom.values["rotary"]}'
+        self.display.text(text, 0, 10)
+        text = f'Keypad :   {self.eeprom.values["keylayout"]}'
+        self.display.text(text, 0, 20)
         self.display.show()
-        self.displayChange = False        
+        self.displayChange = False
+        
+    def display_choice(self):
+        line = self.cursor.line
+        if line == 0 :
+            oldtext = self.choice["Axis"][self.axis]
+            self.axis += 1
+            if self.axis == len(self.choice['Axis']):
+                self.axis = 0
+            self.eeprom.values['axis'] = self.axis
+            newtext = self.choice["Axis"][self.axis]
+        elif line == 1:
+            oldtext = self.eeprom.values['rotary']
+            newtext = -oldtext
+            self.eeprom.values['rotary'] = newtext
+        elif line == 2:
+            oldtext = self.eeprom.values['keylayout']
+            newtext = not oldtext
+            self.eeprom.values['keylayout'] = newtext
+        oldtext = str(oldtext)
+        newtext = str(newtext)
+        self.display.text(oldtext, cursorposition, line*linedistance, 0)        # erase old text
+        self.display.text(newtext, cursorposition, line*linedistance)
+        self.display.show()
+        self.setdisplay_choice = False
+        
 
     def loop(self):
         if utime.ticks_us() - self.lasttime > 500:              # call every 500us
@@ -264,9 +355,9 @@ class cnc_axis():
                 self.noConnectionTime = 0
             if self.valueChange:
                 self.dprint(f'change {self.regMemory}')
-                self.display.text('*', 1, statusline-10)
-                self.display.show()
-                self.display_page1()
+ #               self.display.text('*', 1, statusline-10)
+ #               self.display.show()
+ #               self.display_page1()
                 self.valueChange = False
             if self.switchtime>0 and utime.ticks_ms() - self.switchtime > 500:
                 print("switch = 0")
@@ -281,6 +372,9 @@ class cnc_axis():
             self.led.toggle()
             self.led_lasttime = utime.ticks_us()
             self.wdt.feed()
+        self.cursor.blink(self.page)
+        if self.setdisplay_choice:
+            self.display_choice()    
         #utime.sleep_ms(50)
             
     def dprint(self, msg):
@@ -289,6 +383,6 @@ class cnc_axis():
 
 
 if __name__ == "__main__":
-    run_axis = cnc_axis(PIN_DT, PIN_CLK, PIN_SW1, PIN_SW2, PIN_SW3, PIN_SW4, PIN_I2CCLK, PIN_I2CDT)
+    run_axis = cnc_axis()
     while True:
         run_axis.loop()
