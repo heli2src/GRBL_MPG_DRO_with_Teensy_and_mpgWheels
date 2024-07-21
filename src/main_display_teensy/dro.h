@@ -26,6 +26,8 @@ void DROProcessEvents(void);
 void DROkeyEvent (bool keyDown, char key);
 void DROJoystickEvent (bool change, int key);
 void DROmpgEvent (bool change, int key, int cnt, int modeswitch);
+void DROprintOut (void);
+void DROGetInfo(void);
 
 #endif
 

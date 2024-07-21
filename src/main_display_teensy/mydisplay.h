@@ -78,7 +78,7 @@ typedef struct {
 
 typedef enum {
     WSTART   =  0,          // Wellcome Page
-    WDREHEN  =  1,          // Drehen Page 
+    Wmain  =  1,            // Drehen Page 
     WNUM = 2,               // Virtual numeric keypad
     WAOFFSET = 3,           // Set achs offset to 0
     WMENUE = 4,             // Main Menue
@@ -212,7 +212,7 @@ typedef struct {
 void MyDisplay_init(void);
 void MyDisplay_loop(void);
 void drawString(uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint16_t y, float value, const char *string, bool opaque);
-void set_grblstate(int value, const char* string, uint16_t color, int alarm, int error);
+void set_grblstate(int value, const char* string, uint16_t color, int alarm, int error, int lathe);
 void processKeypress(int DROkey, int keydown, float rpm);
 void processJoystick(int MPGkey);
 void processMpg (char MPGkey, int MPGcnt, int MPGswitch);

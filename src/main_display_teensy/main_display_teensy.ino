@@ -46,7 +46,11 @@
  *           13         -> Pin 12        T_DO    Touch SPI bus output
  *           14         -> Pin 2         T_IRQ   Touch screen interrupt signal, low level when touch is detected 
  *            
- *           
+ *
+ * Configuration:
+ *      mydisplax.c:   mystate.lathe =  0 -> milling with U/min, x,z
+ *                                      1 -> lathe   with x,y,z
+ *                                      + define LATHEMODE in dro.c
  *             
  *  Bugs:
  *      not known 
@@ -79,7 +83,7 @@ void setup()
    //watchdogEnable(1000);
    Serial.begin(115200);      //usb bus
    Serial1.begin(115200);     //grblhal bus                                                                                                                                                                                                                                                                                                                                                                                                                                  
-   //Serial1.serial_putC(0x8B);   // ‹ 0x8B = '‹'   Enable MPG full control1    all $commands and Gcode commands have to be terminated with a CR
+   //Serial1.serial_putC(0x8B);   // ‹ 0x8B = 139 = '‹'   Enable MPG full control1    all $commands and Gcode commands have to be terminated with a CR
    Serial1.setTimeout(100);
    
    DEBUG("Start E-Gear");
@@ -87,7 +91,7 @@ void setup()
 //   DEBUG("MAC:");
 //   print_mac();    
 //   DEBUG(" ");  
- eeprom_write_default(); 
+// eeprom_write_default(); 
    eeprom_read();
    if (strcmp(eeprom.Copyright, "Heli2")!=0) {
       DEBUG("EEPROM init first");
@@ -109,7 +113,6 @@ bool tim25=false;
 void loop() 
 {   
     char buffer [60];
-    String sbuffer;
     unsigned long mylooptime = millis();
 
     if (mylooptime % 25 == 0 && tim25) {    //call every 25ms   
@@ -128,10 +131,22 @@ void loop()
     grblPollSerial();
 
     if (Serial.available() > 0) {
-      Serial.readBytesUntil('\n', buffer, 50);       //buffer = array of char or byte.
-      sbuffer = String(buffer);
-      Serial.println(sbuffer);
-      Serial1.println(sbuffer);
+      Serial.readBytesUntil('\n', buffer, 50);       //see Possible commands https://www.sainsmart.com/blogs/news/grbl-v1-1-quick-reference 
+      if (!strncmp(buffer, "0x", 2)) {
+           uint8_t cmd = (uint8_t) strtol(buffer+2, NULL, 16);
+           Serial1.write(cmd);
+           grblDebug(5);
+      }else if (!strncmp(buffer, "$I", 2)) {
+          grblDebug(15);
+          DROGetInfo();
+          DROprintOut();
+      }else {
+          Serial.println(String(buffer));
+          DROprintOut();
+          grblDebug(-1);
+          grblAwaitACK(buffer, 50);
+          grblDebug(0);
+      }
     }
     wdt_reset();
 } 

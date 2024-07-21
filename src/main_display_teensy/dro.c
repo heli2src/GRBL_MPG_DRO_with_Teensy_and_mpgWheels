@@ -12,17 +12,15 @@
 #include "mydisplay.h"
 #include "grblcomm.h"
 
-static char buffer[50];
 
-
-#define LATHEMODE
+//#define LATHEMODE
 #define RPMROW 200
 #define STATUSROW 218
 #define MSGROW 238
 #ifdef LATHEMODE
 #define XROW 110
 #else
-#define XROW 82
+#define XROW 62
 #endif
 #define YROW XROW + 50
 #define ZROW YROW + 50
@@ -154,7 +152,7 @@ static void displayGrblData (char *line)
             settings->is_loaded = false;
 
         if(grbl_data->changed.state) {
-            set_grblstate(grbl_data->grbl.state, grbl_data->grbl.state_text, grbl_data->grbl.state_color, grbl_data->alarm, grbl_data->error);   // update the state to mydisplay
+            set_grblstate(grbl_data->grbl.state, grbl_data->grbl.state_text, grbl_data->grbl.state_color, grbl_data->alarm, grbl_data->error, grbl_info->options.lathe);   // update the state to mydisplay
 //CJ            if  (grbl_data->grbl.state != Alarm)      
 //CJ            leds.run = grbl_data->grbl.state == Run || grbl_data->grbl.state == Jog;
 //CJ            leds.hold = grbl_data->grbl.state == Hold;
@@ -371,6 +369,19 @@ void DROInitCanvas (void)
 //    } while(i);        
 }
 
+
+void DROGetInfo(void) 
+{
+  grblGetInfo(on_info_received);
+}
+
+void DROprintOut(void)
+{
+  static char buffer[80];
+  sprintf(buffer, "DROprintOut: is_loaded=%d, lathe=%d, mpg=%d, %s ", grbl_info->is_loaded, grbl_info->options.lathe, grbl_data->mpgMode, grbl_info->device);
+  serial0_writeLn(buffer);
+}
+
 void DROkeyEvent (bool keyDown, char key)
 {
     // NOTE: key is read from input buffer during event processing
@@ -412,18 +423,10 @@ void DROShowCanvas (void)           // (lcd_display_t *lcd_screen)
 //            }
 //        }    
    }
-   if(grbl_data) {
-       serial0_writeLn("grbl_data found");
-        //signal_setMPGMode(grbl_data->mpgMode);
-   }else{
-       serial0_writeLn("grbl_data not found");
-   }
-   if(grbl_info == NULL)
+
+   if(grbl_info == NULL) {
        grblGetInfo(on_info_received);
-       
-   sprintf(buffer, "is_loaded= %d", grbl_info->is_loaded);
-   serial0_writeLn(buffer);
-   serial0_writeLn(grbl_info->device);    
+   }
 
    active = true;
 }

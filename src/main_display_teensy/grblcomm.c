@@ -47,6 +47,7 @@ static grbl_data_t grbl_data = {
     .changed          = (uint32_t)-1,
     .position         = {0.0f, 0.0f, 0.0f},
     .offset           = {0.0f, 0.0f, 0.0f},
+    .debug            = false,
     .absDistance      = true,
     .xModeDiameter    = false,
     .feed_override    = 0,
@@ -431,10 +432,11 @@ static void parseData (char *block)
 
     } else if(line[0] == '[') {
         line++;
+        
         if(!strncmp(line, "GC:", 3)) {
 
             line = strtok(&line[3], " ");
-
+            
             while(line) {
 
                 if(!strncmp(line, "F", 1) && parseDecimal(&grbl_data.feed_rate, line + 1))
@@ -580,6 +582,7 @@ bool grblParseState (char *data, grbl_t *grbl)
 
 static void parse_info (char *line)
 {
+//    serial0_writeLn("parse_info");
     if(!strcmp(line, "ok")) {
         grbl_event.on_line_received = parseData;
         if(grbl_event.on_info_received) {
@@ -598,28 +601,33 @@ static void parse_info (char *line)
 
         line[strlen(line) - 1] = '\0';
         line = strtok(&line[8], ",");
-
+        grbl_info.options.lathe=0;
         while(line) {
 
             if(!strncmp(line, "SD", 2))
                 grbl_info.options.sd_card = true;
             else if(!strncmp(line, "TC", 2))
                 grbl_info.options.tool_change = true;
-
+            else if(!strncmp(line, "LATHE", 5))
+                grbl_info.options.lathe=1;
             line = strtok(NULL, ",");
         }
+        grbl_data.changed.state = true;
     } else
         parseData(line);
 }
 
 void grblGetInfo (grbl_info_received_ptr on_info_received)
 {
-    if(grbl_data.mpgMode && grbl_event.on_line_received == parseData) {
+        if(grbl_event.on_line_received == parseData) {
+//CJ    if(grbl_data.mpgMode && grbl_event.on_line_received == parseData) {
+        serial0_writeLn("grblGetInfo()");
         grbl_event.on_info_received = on_info_received;
         grbl_event.on_line_received = parse_info;
         serial_RxCancel();
         serial_writeLn("$I");
     } else if (on_info_received)
+        serial0_writeLn("grblGetInfo: else");
         on_info_received(&grbl_info); // return default values
 }
 
@@ -795,19 +803,30 @@ bool grblAwaitACK (const char *command, uint_fast16_t timeout_ms)
     return ack_received;
 }
 
+void grblDebug(short debug)
+{   grbl_data.debug = debug;
+} 
+
 void grblPollSerial (void)
 {
     static int_fast16_t c;
     static uint_fast16_t char_counter = 0;
+    bool dec_debug = false;
 
     while((c = serial_getC()) != SERIAL_NO_DATA) {
 
         if(c == 0x18) //ASCII_CAN
             char_counter = 0;
         else if(((c == '\n') || (c == '\r'))) { // End of line reached
-
+          
             grbl_data.block[char_counter] = '\0';
-            
+
+            if (grbl_data.debug !=0 ) {
+                serial0_writeLn(grbl_data.block);
+                if (grbl_data.debug)
+                    dec_debug = true;
+            }
+
             if(char_counter > 0)
                  grbl_event.on_line_received(grbl_data.block);
 
@@ -816,4 +835,6 @@ void grblPollSerial (void)
         } else if(char_counter < MAX_BLOCK_LENGTH - 1)
             grbl_data.block[char_counter++] = (char)c;
     }
+    if (dec_debug)
+        grbl_data.debug--;
 }

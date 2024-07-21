@@ -142,6 +142,7 @@ typedef struct {
     grbl_t grbl;
     float position[3];
     float offset[3];
+    short debug;
     spindle_data_t spindle;
     coolant_data_t coolant;
     int32_t feed_override;
@@ -201,6 +202,7 @@ void grblSendSerial (char *line);
 bool grblParseState (char *state, grbl_t *grbl);
 bool grblAwaitACK (const char *command, uint_fast16_t timeout_ms);
 bool grblIsMPGActive (void);
+void grblDebug (short);
 
 void grblGetInfo (grbl_info_received_ptr on_info_received);
 void grblGetSettings (grbl_settings_received_ptr on_settings_received);

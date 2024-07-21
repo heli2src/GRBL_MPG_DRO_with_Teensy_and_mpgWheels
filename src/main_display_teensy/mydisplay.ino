@@ -57,7 +57,7 @@ uint16_t TITLE_BACK = C_VALUES[36];
 #define ROWS                3           // 5
 #define DATA_COLUMN         230         // 190
 
-#define LATHE           true
+//#define LATHE           true
 #define COLUMN1         60
 #define COLUM_DISTANCE  50
 
@@ -78,7 +78,7 @@ typedef struct {
 struStates  dstate[WEND+1] = {   //assign numstate to the the calling function and define a parameter
 // numstate, function, para
   {    WSTART,   Dinit,   0},         // 0 
-  {   WDREHEN, Adrehen,   0},         // 1
+  {     Wmain,   Dmain,   0},         // 1
   {      WNUM,    Dnum,   0},         // 2
   {  WAOFFSET, Doffset,   0},         // 3
   {    WMENUE,  Dmenue,   0},         // 4
@@ -109,6 +109,7 @@ typedef struct {
             } struMyFlags;
 
 typedef struct {
+    int lathe = 0;
     int state = WSTART;
     call_enum_t execute;    
     int oldstate = -1;    
@@ -210,7 +211,7 @@ void showPage(int ssize, struPage* ddisplay){
   //byte checkboxindex = 0; 
   Display.setFont(F_A24);
   for (byte index = 0; index < ssize; index++) {
-      if (ddisplay[index].Typ[0] == 'T') {
+      if (ddisplay[index].Typ[0] == 'T') {            // Text type
         switch (ddisplay[index].Typ[1]){
           case '0':  Display.setFont(F_A24);
                      break;
@@ -224,9 +225,9 @@ void showPage(int ssize, struPage* ddisplay){
         Display.setTextColor(ddisplay[index].TextColor);
         Display.setCursor(ddisplay[index].x , ddisplay[index].y );
         Display.print(F(ddisplay[index].Text));
-      }else if (ddisplay[index].Typ[0] == 'B') {
+      }else if (ddisplay[index].Typ[0] == 'B') {      // Button type
         buttonheight = BUTTONHEIGHT;
-        if (ddisplay[index].Typ[1] == 'k'){
+        if (ddisplay[index].Typ[1] == 'k'){           // Button type short
             buttonwidth = 20;  // 14 * strlen(ddisplay[index].Text) + 2;
             buttonheight = 25;
         }else{
@@ -234,6 +235,7 @@ void showPage(int ssize, struPage* ddisplay){
             if (buttonwidth < MINBUTTONWIDTH) 
                 buttonwidth = MINBUTTONWIDTH;
         }
+//        DEBUG("   Create Button: ", ddisplay[index].Text, buttonindex);  
         Buttons[buttonindex].resize(ddisplay[index].x, ddisplay[index].y, buttonwidth, buttonheight);
         Buttons[buttonindex].setColors(ddisplay[index].TextColor, BackColor, ddisplay[index].TextColor, BackColor, BackColor, BackColor);
         Buttons[buttonindex].setText(ddisplay[index].Text);
@@ -243,7 +245,7 @@ void showPage(int ssize, struPage* ddisplay){
         if (ddisplay[index].Next == 0) Buttons[buttonindex].value = -ddisplay[index].Text[0];
         buttonindex += 1;
       }
-//      }else if (ddisplay[index].Typ[0] == 'C') {      
+//      }else if (ddisplay[index].Typ[0] == 'C') {      // Checkbox type
 //        CheckBoxs[checkboxindex].resize(ddisplay[index].x, ddisplay[index].y, CHECKBOX_SIZE);
 //        // OutlineColor, UPColor, ,DownColor BackgroundColor, DisableOutlineColor, DisableTextColor, DisableUPColor, DisableDownColor
 //        CheckBoxs[checkboxindex].setColors(ddisplay[index].TextColor, ddisplay[index].TextColor, ddisplay[index].TextColor, ddisplay[index].TextColor, C_DISABLE_LIGHT, C_DISABLE_MED, C_DISABLE_DARK, C_DISABLE_MED);
@@ -320,7 +322,7 @@ void Dinit(void) {
            {  10,   10, C_WHITE, "T0", "      --  (c) Heli2  --", 0}, // 0
            { 110,   80, C_BLUE,  "T1", "Elektronische",           0}, // 1
            { 120,  110, C_BLUE,  "T1", "Leitspindel",             0}, // 2            
-           { 130,  140, C_BLUE,  "T1", "V0.16",                   0}, // 3
+           { 130,  140, C_BLUE,  "T1", "V0.16c",                   0}, // 3
            //{ 130,  160, C_BLUE, "T", eeprom.Version,            0}, // 3
         };
         DEBUG("   Dinit: Cinit");  
@@ -331,7 +333,7 @@ void Dinit(void) {
         break;}
    case Crun:{
         if (millis()-mystate.stime > 2000) {
-            mystate.state = WDREHEN;
+            mystate.state = Wmain;
         }
         break;}
    case Cend: {
@@ -348,7 +350,7 @@ void Dmenue(void){
     case Cinit: {
         struPage mytext []= {
            { 100,                          10, TextColor, "T0","Menue",                 0},     // 0
-           { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Manuell Drehen",      WDREHEN},  // 1
+           { 140, COLUMN1+11+0*COLUM_DISTANCE, TextColor, "B", "Manuell Drehen",      Wmain},  // 1
            { 140, COLUMN1+11+1*COLUM_DISTANCE, TextColor, "B", "Default values",      WDEFAULT}, // 2           
            { 140, COLUMN1+11+2*COLUM_DISTANCE, TextColor, "B", "Home          ",      WHOME},    // 3
            { 140, COLUMN1+11+3*COLUM_DISTANCE, TextColor, "B", "Reset         ",      WRESET}    // 4           
@@ -388,41 +390,77 @@ void Dreset(void){
         mystate.state = mystate.prevstate;             
 }
 
-void Adrehen(void) {              // Aussendrehen
-   switch (mystate.execute) {
-    case Cinit: {
-        struPage mytext[]= {
-           { 10,                           7, TextColor, "T0", "Manuell Drehen",     0}, // 0
-           { 10, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "F :",               0}, // 1
-           { 28, COLUMN1+0*COLUM_DISTANCE+15, TextColor, "T2",  "z",                 0}, // 1
-           { 80, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2",  "target",            0}, // 1
-           {220, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2",  "actual",            0}, // 1
-           {150, COLUMN1+0*COLUM_DISTANCE+10,  TextColor, "T2",  "mm/U",              0}, // 1
-           {205, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0",  "U:",                0}, // 1  
-           { 10, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0",  "X :",                0}, // 1
-           { 10, COLUMN1+2*COLUM_DISTANCE,    TextColor, "T0",  "Z :",                0}, // 1                              
-           {100, COLUMN1+0*COLUM_DISTANCE+12, TextColor, "B",    "00.000",        WNUM}, // 1   Button Fz:
-           {115, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 2   Button X:
-           {115, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "B",  " 000.000",        WNUM}, // 3   Button Z:
+void Init_lathe(void){
+   struPage mytext[]= {
+       { 10,                           7, TextColor, "T0", "Manuell Drehen",     0}, // 0
+       { 10, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0", "F :",               0}, // 1
+       { 28, COLUMN1+0*COLUM_DISTANCE+15, TextColor, "T2", "z",                 0}, // 1
+       { 80, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2", "target",            0}, // 1
+       {220, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2", "actual",            0}, // 1
+       {150, COLUMN1+0*COLUM_DISTANCE+10, TextColor, "T2", "mm/U",              0}, // 1
+       {205, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0", "U:",                0}, // 1  
+       { 10, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0", "X :",                0}, // 1
+       { 10, COLUMN1+2*COLUM_DISTANCE,    TextColor, "T0", "Z :",                0}, // 1                              
+       {100, COLUMN1+0*COLUM_DISTANCE+12, TextColor, "B",  "00.000",          WNUM}, // 1   Button Fz:
+       {115, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 2   Button X:
+       {115, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "B",  " 000.000",        WNUM}, // 3   Button Z:
 //           { 15, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 4
 //           { 15, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 5
-           { 290,                         20, TextColor, "Bk", " M",           WMENUE},  // 6
-        };
-        showPage(sizeof(mytext)/sizeof(struPage), mytext);
-        Display.setTextColor(TextColor);
-        target.changed = true;
+       { 290,                         20, TextColor, "Bk", " M",           WMENUE},  // 6  
+    };
+    DEBUG("Init_lathe");
+    showPage(sizeof(mytext)/sizeof(struPage), mytext);
+    Display.setTextColor(TextColor);
+    target.changed = true;
+}
+
+void Init_milling(void){
+    struPage mytext[]= {
+       { 10,                           7, TextColor, "T0", "Manuell Fraesen",    0}, // 0
+       { 80, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2", "target",            0}, // 1
+       {220, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2", "actual",            0}, // 1
+       { 10, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0", "X :",               0}, // 1                
+       { 10, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0", "Y :",               0}, // 1
+       { 10, COLUMN1+2*COLUM_DISTANCE,    TextColor, "T0", "Z :",               0}, // 1                              
+       {115, COLUMN1+0*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 1   Button X:
+       {115, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 2   Button Y:
+       {115, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 3   Button Z:
+ //      { 15, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 4
+ //      { 15, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 5
+       { 290,                         20, TextColor, "Bk", " M",           WMENUE},  // 6
+    }; 
+    DEBUG("Init_milling");
+    showPage(sizeof(mytext)/sizeof(struPage), mytext);
+    Display.setTextColor(TextColor);
+    target.changed = true; 
+}
+
+void Dmain(void) {              // Aussendrehen
+   switch (mystate.execute) {
+    case Cinit: {
+        if (mystate.lathe == 1) 
+            Init_lathe();
+        else
+            Init_milling();
         break;}
    case Crun:{              
     // die Tasten selber werden dann in dro.c/processKeypress bearbeitet.
     // die schnellen Anzeigen, werden mit drawString() in dro.c geschrieben
         if (target.changed) {
-            DEBUG("   Adrehen Crun", target.x, target.z);
-            sprintf(buffer10, "%.3f", target.fz);
-            Buttons[0].setText(buffer10);
-            sprintf(buffer10, "%.3f", target.x);
-            Buttons[1].setText(buffer10);
+            DEBUG("   Dmain Crun", target.x, target.y, target.z);
+            if (mystate.lathe == 1) {
+                sprintf(buffer10, "%.3f", target.fz);
+                Buttons[0].setText(buffer10);
+                sprintf(buffer10, "%.3f", target.x);
+                Buttons[1].setText(buffer10);
+            } else {
+                sprintf(buffer10, "%.3f", target.x);
+                Buttons[0].setText(buffer10);
+                sprintf(buffer10, "%.3f", target.y);
+                Buttons[1].setText(buffer10);      
+            }
             sprintf(buffer10, "%.3f", target.z);
-            Buttons[2].setText(buffer10);
+            Buttons[2].setText(buffer10); 
             target.changed = false;
             Buttons[0].show();
             Buttons[1].show();
@@ -431,13 +469,13 @@ void Adrehen(void) {              // Aussendrehen
         showMessage();
         break;}
    case Cend: { 
-//        DEBUG("   Adrehen Cend");  
+//        DEBUG("   Dmain Cend");  
         break;}
    case Ckeys:{
           char axis;
           float mystateaxis;
           axis = mystate.DROkey / 10 + 'X' -1;
-          DEBUG("   Adrehen Ckeys", mystate.DROkey, axis); 
+          DEBUG("   Dmain Ckeys", mystate.DROkey, axis); 
           if (mystate.grblState == Idle) {        // = 1
               float targetfmin, targetf, targetaxis;
               switch (axis) {
@@ -475,11 +513,15 @@ void Adrehen(void) {              // Aussendrehen
                   sprintf(buffer10, "%.3f", mystateaxis);
                   switch (axis) {
                       case 'X': {target.x = mystateaxis;
-                                 Buttons[1].setText(buffer10);
-                                 Buttons[1].show();
+                                 char index = 0;
+                                 if (mystate.lathe == 1)
+                                     index = 1;
+                                 Buttons[index].setText(buffer10);
+                                 Buttons[index].show();
                                  break;}
                       case 'Y': {target.y = mystateaxis;
-                                 DEBUG('y-Axis not implemented yet');
+                                 Buttons[1].setText(buffer10);
+                                 Buttons[1].show();
                                  break;}
                       case 'Z': {target.z = mystateaxis;
                                  Buttons[2].setText(buffer10);
@@ -718,11 +760,18 @@ void Dnum(void) {        //virtual numeric keyboard
         }
         break;}
    case Cend: {                                                     // this should be changed: make it independent from the state 
-        DEBUG("   Dnum: Cend", mystate.bindex, input.fvalue);
-        if (mystate.prevstate == WDREHEN ) {
+        DEBUG("   Dnum: Cend", mystate.bindex, input.fvalue, "prevstate=", mystate.prevstate, "lathe=", mystate.lathe);
+        if (mystate.prevstate == Wmain ) {
+          if (mystate.lathe == 0) {
+            if (mystate.bindex == 0) target.x = input.fvalue;
+            else if (mystate.bindex == 1) target.y = input.fvalue;
+            else if (mystate.bindex == 2) target.z = input.fvalue;
+          }
+          else if (mystate.lathe == 1) {
             if (mystate.bindex == 0) target.fz = abs(input.fvalue);
             else if (mystate.bindex == 1) target.x = input.fvalue;
-            else if (mystate.bindex == 2) target.z = input.fvalue;
+            else if (mystate.bindex == 2) target.z = input.fvalue;         
+          }
         }else if (mystate.prevstate == WDEFAULT ) {
            if (mystate.bindex == 0) target.fzmin = abs(input.fvalue);
         }
@@ -899,12 +948,13 @@ void MyDisplay_loop(void){
 }
 
 void drawString (uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint16_t y, float value, const char *string, bool opaque){
-    if (mystate.state == WDREHEN) {
+    if (mystate.state == Wmain) {
         //DEBUG("drawString", i, x, y, value, string);
         Display.setFont(*font); 
         Display.setFont(Arial_24);
         Display.setCursor(x, y);
-        Flickerlabel[i].print(string);
+        if ((mystate.lathe == 1) || ((mystate.lathe == 0) && (i<3)))
+            Flickerlabel[i].print(string);
         switch (i){
            case 0 : mystate.x = value;break;
            case 1 : mystate.y = value;break;         
@@ -914,10 +964,11 @@ void drawString (uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint
     }
 }
 
-void set_grblstate(int value, const char* string, uint16_t color, int alarm, int error)
+void set_grblstate(int value, const char* string, uint16_t color, int alarm, int error, int lathe)
 {
     //if (value != mystate.grblState) {
     {
+        mystate.lathe = lathe;
         mystate.grblState = value;
         mystate.change_grblState = true;
         if (alarm < 20)                    // todo: Alarm wird nach poweroff von grblcom nicht mehr gesetzt ??!!
@@ -949,7 +1000,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
     //DEBUG("processMpg", MPGkey, MPGcnt, MPGdtime);
     // char buffer50[50];
     // sprintf(buffer50, "processMpg %d %d", MPGcnt, MPGdtime); debugDisplay(buffer50);
-    if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == WDREHEN) && (MPGkey!= 0))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging
+    if ((mystate.grblState == Idle || mystate.grblState == Jog) && (mystate.state == Wmain) && (MPGkey!= 0))  {     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Jogging
         // DEBUG(mystate.grblState, Idle, Jog, mystate.state, MPGkey);
         float speed;
         unsigned long time = millis();
