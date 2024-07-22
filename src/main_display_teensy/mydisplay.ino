@@ -1017,7 +1017,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
         // in mpg mode G95 is not allowed :-(
         sprintf(command, "$J=G91 %c%.3f F%.1f", MPGkey, float(MPGcnt)*0.01, speed);   //e.q. $J=G91 Z1.000 F100.0   # G91 = relative movement
         serial_writeLn(command);
-        DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, mystate.rpm, command);      
+        //DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, mystate.rpm, command);      
     } 
 }
 

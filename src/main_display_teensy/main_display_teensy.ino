@@ -50,20 +50,26 @@
  * Configuration:
  *      mydisplax.c:   mystate.lathe =  0 -> milling with U/min, x,z
  *                                      1 -> lathe   with x,y,z
- *                                      + define LATHEMODE in dro.c
+ *                                      + define LATHEMODE in dro.c                           #Todo!   :-(
+ *                                      + define LATHEMODE in myTochCalibration               #also Todo!
  *             
  *  Bugs:
  *      not known 
  *      
  *  to do:
+ *      - add calibratrion Menue for touch screen see C:\Users\model\Eigene Dokumente\Projecte\Elektronik\Arduino\libraries\XPT2046_Calibrated
+ *      - add in mydisplax.Buttons varialbe which are manipulatem e.q. target.x, target.y, target.z
+ *      - use lathe variable from grblhalt and set mystate.lathe
  *      - tastendruck hält alles an :-(   -> umbauen auf millis
-
         - mpg stop abfragen und auswerten !!
         -  mpg slave id must be changed for each achse
         - start.taste am Display geht nicht mehr??
         - speed von mpg bei x10, x100 über Fz, Fx einstellungen
         -  handwheel.ino:
 +            implemented : only id=3 (change to all axis)
+*       - use 3,5" ILI9488  https://github.com/jaretburkett/ILI9488
+*                           https://forum.pjrc.com/index.php?threads/tft-from-buydisplay-with-ili9488-and-ft6236-controllers-wiring.45316/
+*                           https://forum.pjrc.com/index.php?threads/teensy-4-0-4-1-ili9488-lcd.66712/
  *
  * 
  */
