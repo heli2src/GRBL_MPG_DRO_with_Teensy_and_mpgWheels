@@ -3,12 +3,16 @@
 
 // -- CONFIGURATION --
 
+//#define LATHEMODE
+
 #define TS_CS_PIN 3 
 //#define TS_IRQ_PIN  2
 
 #define TFT_CS_PIN 10
 #define TFT_DC_PIN 9
 
+
+// --------------------------------------------------
 static uint16_t const SCREEN_WIDTH    = 320;
 static uint16_t const SCREEN_HEIGHT   = 240;
 static uint8_t  const SCREEN_ROTATION = 1U;
@@ -22,12 +26,22 @@ static TS_Point _screenPoint[] = {
   TS_Point(167, 214)  // point C
 };
 
+#ifdef LATHEMODE
 // touchscreen points used for calibration verification
 static TS_Point _touchPoint[] = {
-  TS_Point(3723, 3575), // point A
+  TS_Point(3723, 3575), // point A            # this depends from you tft screen, values comes from TouchCalibration, this should be run first!!
   TS_Point( 459, 2130), // point B
   TS_Point(2063,  783), // point C
 };
+#else
+//milling:
+// touchscreen points used for calibration verification
+static TS_Point _touchPoint[] = {
+  TS_Point(3970, 2940), // point A
+  TS_Point(1035, 2416), // point B
+  TS_Point(2526, 1017), // point C
+};
+#endif
 
 static TS_Calibration cal(
     _screenPoint[(int)PointID::A], _touchPoint[(int)PointID::A],
