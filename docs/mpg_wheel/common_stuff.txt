@@ -6,6 +6,9 @@ MicroPython v1.19.1 on 2022-10-04; Raspberry Pi Pico with RP2040
 https://pypi.org/project/micropython-modbus/
 	https://github.com/brainelectronics/micropython-modbus
 
+
+
+https://www.pollin.de/p/western-modularbuchse-rj12-540126?etcc_med=fshopping&etcc_ori=google&et_cmp_seg2=sea-fshopping&channelid=fshopping&utm_medium=fshopping&utm_source=google&etcc_med=CPC&etcc_par=Google&etcc_cmp=PMax-DE-CSS-Shopping-VP-5&et_cmp_seg2=SEA-CSS&etcc_var=EAIaIQobChMIydLx1JvzgQMVJT0GAB3D-Qc8EAQYBCABEgJjx_D_BwE&et_cmp_seg1=20281414516&etcc_grp=&etcc_bky=&etcc_mty=&gclid=EAIaIQobChMIydLx1JvzgQMVJT0GAB3D-Qc8EAQYBCABEgJjx_D_BwE
 Stecker RJ12			see https://instrumentic.info/de/rj12-kabel.html#gsc.tab=0
 	Pin 1 - Vdd  (5V)		blau
 	Pin 2 - A    (next)		gelb
