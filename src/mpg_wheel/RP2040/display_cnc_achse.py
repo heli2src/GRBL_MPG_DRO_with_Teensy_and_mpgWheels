@@ -2,7 +2,8 @@
 Handwheel with Encoder + Rasperry Pi Pico Zero
 
 use https://micropython.org/download/rp2-pico/
-        MicroPython:  RPI_PICO-20240222-v1.22.2
+        https://github.com/micropython/micropython
+        MicroPython:  RPI_PICO-20240602-v1.23.0.uf2
         
     install necessary libs from https://github.com/micropython/micropython-lib:   (from your python shell and pip install mpremote)
         see https://docs.micropython.org/en/latest/reference/mpremote.html 
@@ -31,7 +32,6 @@ use https://micropython.org/download/rp2-pico/
     WS2812 LED :      -> GP16    
     
     todo:
-       - add changing axis with buttons
        - disable button im setup mode
        - use dma for the data from SSD1306
        - display values from the axis
@@ -49,7 +49,7 @@ from lib.ssd1306 import SSD1306_I2C
 from lib.modbus import Modbus
 from lib.ws2812 import ws2812
 
-__version__ = "V0.0.8"
+__version__ = "V0.0.9"
 #Configuration
 #_____________________________
 
@@ -249,7 +249,7 @@ class cnc_axis():
             if self.jogmode == 0:
                 self.eeprom.write()
                 print(f'       write eeprom')
-                # self.init()
+                self.init()
             print(f'       config {dtime}')
 
     def sw4_irq(self, pin):
