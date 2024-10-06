@@ -7,7 +7,7 @@ typedef struct {
 
 structAlarmcodes alarmcodes []= {
     {"Unlock", "Home", "unknown Alarm :-( "},
-    {"",       "Home", "Hard limit has been\ntriggered.\n\nDo Re-homing"},                   //1
+    {"Unlock", "Home", "Hard limit has been\ntriggered.\n\nDo Unlock/Re-homing"},                   //1
     {"",       "Unlock", "Soft limit alarm.\nG-code motion target\nexceeds machine travel.\nAlarm may be safely\nunlocked"},         //2
     {"",       "Home", "Reset while in\nmotion. Re-homing"},                                //3
     {"",       "", "Probe fail. "},                                                         //4
