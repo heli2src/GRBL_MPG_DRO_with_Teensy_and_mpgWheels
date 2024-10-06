@@ -6,8 +6,8 @@ const int adcin2 = A2; // ADC1
 
 ADC *adc = new ADC(); // adc object;
 
-const uint8_t buttonCount = 4;
-const uint8_t buttonPins[buttonCount] = {17,16,14,15}; // pin with pull down resistor, active-low (positive number), or active-high (negative number).
+const uint8_t buttonCount = 5;
+const uint8_t buttonPins[buttonCount] = {14,15,16,17,18}; // pin with pull down resistor, active-low (positive number), or active-high (negative number).
 Bugtton buttons(buttonCount, buttonPins, 25);
 
 uint8_t switchmode =0;
@@ -22,6 +22,9 @@ int maxv = 0;
    
 void Switch_init(void) {
     pinMode(adcin2, INPUT);
+    buttons.setMode(18, INPUT_PULLUP);  
+    buttons.setMode(17, INPUT_PULLUP);  
+    buttons.setMode(16, INPUT_PULLUP);  
     buttons.setMode(15, INPUT_PULLUP);
     buttons.setMode(14, INPUT_PULLUP);   
 
@@ -39,13 +42,15 @@ void Switch_loop(void){
     buttons.update();
     if (switchmode ==0){  
         if (buttons.fell(0))
-            DROkeyEvent(true, 0);
+            DROkeyEvent(true, 0);         // see dro.c
         if (buttons.fell(1))
             DROkeyEvent(true, 1);
          if (buttons.fell(2))
             DROkeyEvent(true, 2);
          if (buttons.fell(3))
             DROkeyEvent(true, 3);
+         if (buttons.fell(4))
+            DROkeyEvent(true, 4);
     }else {
         if (buttons.held(0))
             DROkeyEvent(true, 0);

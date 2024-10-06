@@ -11,7 +11,7 @@
 ** \par           Copyright (c) 2023 Heli2
 **
 ** \author        C.Jung
-** \version       V0.01
+** \version       V0.17
 **
 **************************************************************************
 */
@@ -24,6 +24,7 @@
 /* -------
    DEFINES
   -------- */
+#define LATHEMODE
 #define BLINKDELAY 500
 
 //defining fonts
@@ -216,6 +217,8 @@ void set_grblstate(int value, const char* string, uint16_t color, int alarm, int
 void processKeypress(int DROkey, int keydown, float rpm);
 void processJoystick(int MPGkey);
 void processMpg (char MPGkey, int MPGcnt, int MPGswitch);
+void MyDisplay_LedMPG_toggle(void);
+void MyDisplay_LedMPG(bool on);
 
 
 // Label *UILibLabelCreate(Widget *parent, ILI9341_t3_font_t *font, uint16_t fgColor, uint16_t x, uint16_t y, uint16_t width, void (*eventHandler)(Widget *self, Event *event));

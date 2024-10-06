@@ -29,7 +29,21 @@ use https://micropython.org/download/rp2-pico/
                   clk -> GP9 I2C0 SCL (Pin9)
                   dat -> GP8 I2C0 SDA (Pin10)
                   
-    WS2812 LED :      -> GP16    
+    WS2812 LED :      -> GP16
+    
+    Function:
+            - poll every 500us the RS485 bus
+               - if receive nothing: display 'no connection'
+               - else send
+                       - slave address (e.q 0x03)
+                       - Function Code 0x03 = Multiple Holding Registers 
+                       - The Data Address of the first register e.q: 0x06,0x00
+                       - No. of bytes of response 0x00,0x00
+                       - Databyte 0x00, 0x00
+                       - Checksum 16bit crc
+             - 4 Buttons
+                - see SW1-SW4
+             - rotary wheel
     
     todo:
        - disable button im setup mode
@@ -161,7 +175,7 @@ class cnc_axis():
         #tim = Timer()
         #tim.init(freq=1, mode=Timer.PERIODIC, callback=showValues)
         
-        self.jogmode = 0                # 0-2 : button  disable, jogging, control, > 10: >4s switch to changing axis
+        self.jogmode = 0                # 0-2 : button  disable, jsend b'\x03\x03\x06\x00\x00\x00\x00\x00\x008\x15'ogging, control, > 10: >4s switch to changing axis
         self.displayChange = True
         self.buttontime = 0        
 
@@ -177,7 +191,7 @@ class cnc_axis():
         sw4 = Pin(pin_sw4, Pin.IN, Pin.PULL_UP)                                            # drive axis to 0/set axis to 0
         sw4.irq(handler=self.sw4_irq, trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING )
 
-        self.client = Modbus(port=0, slaveaddress=self.axis+1, baudrate=38400, debug=False) # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
+        self.client = Modbus(port=0, slaveaddress=self.axis+1, baudrate=38400, debug=True) # Init Modbus Slaveadress should be X,Y,Z = 88, 89, 90,
         self.client.regMemory = self.regMemory
         self.noConnectionTime = -5
 

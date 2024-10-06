@@ -16,6 +16,10 @@
  *            left1 ->  Pin 15
  *            right1->  Pin 16 
  *            right ->  Pin 17 
+ *            mpg mode -> Pin 18
+ *            
+ *  - LED
+ *            mpg mode -> Pin 19
  *            
  *  - Uart
  +       for communication with the grblHAL:
@@ -48,31 +52,31 @@
  *            
  *
  * Configuration:
- *      mydisplax.c:   mystate.lathe =  0 -> milling with U/min, x,z
+ *      mydisplay.c:   mystate.lathe =  0 -> milling with U/min, x,z
  *                                      1 -> lathe   with x,y,z
- *                                      + define LATHEMODE in dro.c                           #Todo!   :-(
- *                                      + define LATHEMODE in myTochCalibration               #also Todo!
+ *      handwheel.ino   usedAxis[] = {'X', 'Y', 'Z', 'A'};
  *             
  *  Bugs:
  *      not known 
  *      
  *  to do:
+ *      - evaluate grblGetInfo() and get version from GrblHAL
  *      - add calibratrion Menue for touch screen see C:\Users\model\Eigene Dokumente\Projecte\Elektronik\Arduino\libraries\XPT2046_Calibrated
- *      - add in mydisplax.Buttons varialbe which are manipulatem e.q. target.x, target.y, target.z
- *      - use lathe variable from grblhalt and set mystate.lathe
+ *      - add in mydisplax.Buttons variable which are manipula item e.q. target.x, target.y, target.z
+ *      - use lathe variable from grblhalt and set mystate.lathe        #partly implemented, use additional main_display_teensy.h: #define LATHEMODE 
  *      - tastendruck hält alles an :-(   -> umbauen auf millis
         - mpg stop abfragen und auswerten !!
-        -  mpg slave id must be changed for each achse
+        - mpg slave id must be changed for each achse
         - start.taste am Display geht nicht mehr??
         - speed von mpg bei x10, x100 über Fz, Fx einstellungen
-        -  handwheel.ino:
-+            implemented : only id=3 (change to all axis)
+        - check axis A : handwheel unkomment Debug 'call DROmpgEvent'
 *       - use 3,5" ILI9488  https://github.com/jaretburkett/ILI9488
 *                           https://forum.pjrc.com/index.php?threads/tft-from-buydisplay-with-ili9488-and-ft6236-controllers-wiring.45316/
 *                           https://forum.pjrc.com/index.php?threads/teensy-4-0-4-1-ili9488-lcd.66712/
  *
  * 
  */
+#include "main_display_teensy.h"
 #include <SerialDebug.h>
 #include <avr/wdt.h>
 #include "para_eeprom.h"
@@ -129,12 +133,13 @@ void loop()
 
     if (mylooptime % 50 == 0 && tim50) {    //call every 50ms
         MyDisplay_loop();
-        Switch_loop();
+        Switch_loop();                      // Query the switches
         tim50 = false;      
     }else if (mylooptime % 50 != 0)
         tim50 = true;
-    DROProcessEvents();
-    grblPollSerial();
+    DROProcessEvents();                     // processing from switches(key), MPG events and DRO events(than send CMD_STATUS_REPORT)
+    DROSet_EventDRO();                      // every 200ms set EVENT_DRO (=5Hz, see https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface), get Status Report
+    grblPollSerial();                       // new messages from Uart-Port?
 
     if (Serial.available() > 0) {
       Serial.readBytesUntil('\n', buffer, 50);       //see Possible commands https://www.sainsmart.com/blogs/news/grbl-v1-1-quick-reference 
@@ -143,9 +148,9 @@ void loop()
            Serial1.write(cmd);
            grblDebug(5);
       }else if (!strncmp(buffer, "$I", 2)) {
-          grblDebug(15);
+          grblDebug(10);                            // display 10 status messages 
           DROGetInfo();
-          DROprintOut();
+          DROprintOut();                            // get is_loaded, lathe, mpg, grblHAL MPG & DRO 
       }else {
           Serial.println(String(buffer));
           DROprintOut();

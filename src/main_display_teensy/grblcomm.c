@@ -305,9 +305,10 @@ static void parseData (char *block)
         return;
     }
     if (block[0] == '<' && block[strlen(block)-1] != '>') {
-        serial0_write(block[0]);
-        serial0_write(block[strlen(block)-1]);
-        serial0_writeLn("|    ->wrong block -> discard");
+            //serial0_write(block);
+            //serial0_write(block[0]);
+            //serial0_write(block[strlen(block)-1]);
+            //serial0_writeLn("|    ->wrong block -> discard");
         return;
     }
 
@@ -582,7 +583,7 @@ bool grblParseState (char *data, grbl_t *grbl)
 
 static void parse_info (char *line)
 {
-//    serial0_writeLn("parse_info");
+    //serial0_writeLn("parse_info");
     if(!strcmp(line, "ok")) {
         grbl_event.on_line_received = parseData;
         if(grbl_event.on_info_received) {
@@ -598,7 +599,7 @@ static void parse_info (char *line)
             grbl_info.device[MAX_STORED_LINE_LENGTH - 1] = '\0';
         }
     } else if(!strncmp(line, "[NEWOPT:", 8)) {
-
+        serial0_writeLn("NEWOPT");
         line[strlen(line) - 1] = '\0';
         line = strtok(&line[8], ",");
         grbl_info.options.lathe=0;
@@ -613,13 +614,15 @@ static void parse_info (char *line)
             line = strtok(NULL, ",");
         }
         grbl_data.changed.state = true;
-    } else
+    } else{
+        //serial0_writeLn("parseData");
         parseData(line);
+    }
 }
 
 void grblGetInfo (grbl_info_received_ptr on_info_received)
 {
-        if(grbl_event.on_line_received == parseData) {
+    if(grbl_event.on_line_received == parseData) {
 //CJ    if(grbl_data.mpgMode && grbl_event.on_line_received == parseData) {
         serial0_writeLn("grblGetInfo()");
         grbl_event.on_info_received = on_info_received;
@@ -627,7 +630,7 @@ void grblGetInfo (grbl_info_received_ptr on_info_received)
         serial_RxCancel();
         serial_writeLn("$I");
     } else if (on_info_received)
-        serial0_writeLn("grblGetInfo: else");
+        serial0_writeLn("grblGetInfo: display last infos");
         on_info_received(&grbl_info); // return default values
 }
 

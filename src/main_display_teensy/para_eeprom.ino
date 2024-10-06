@@ -15,7 +15,7 @@ void eeprom_write(void){
 
 void eeprom_write_default(void){
     strcpy(eeprom.Copyright, "Heli2");
-    strcpy(eeprom.Version, "V0.0.13");
+    strcpy(eeprom.Version, "V0.0.17");
     eeprom.BGred = 0;
     eeprom.BGgreen = 0;
     eeprom.BGblue = 0;

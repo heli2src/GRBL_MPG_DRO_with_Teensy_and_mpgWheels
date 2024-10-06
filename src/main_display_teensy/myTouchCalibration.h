@@ -1,9 +1,8 @@
 
 #include <XPT2046_Calibrated.h>
+#include "main_display_teensy.h"
 
 // -- CONFIGURATION --
-
-//#define LATHEMODE
 
 #define TS_CS_PIN 3 
 //#define TS_IRQ_PIN  2

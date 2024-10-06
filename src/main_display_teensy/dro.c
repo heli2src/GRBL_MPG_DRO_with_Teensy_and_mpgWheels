@@ -8,12 +8,11 @@
 #include <math.h>
 #include <font_Arial.h>
 //#include <font_ArialBold.h>
+#include "main_display_teensy.h"
 #include "dro.h"
 #include "mydisplay.h"
 #include "grblcomm.h"
 
-
-//#define LATHEMODE
 #define RPMROW 200
 #define STATUSROW 218
 #define MSGROW 238
@@ -128,8 +127,9 @@ static void on_settings_received (settings_t *setn)
 
 //CJ    displayBanner(grbl_data->mpgMode ? (settings->is_loaded ? Blue : Red) : White);
 
-//    if(grbl_data->mpgMode) // Get parser state
-//        serial_writeLn("$G");
+    if(grbl_data->mpgMode) // Get parser state
+        serial_writeLn("$G");
+    MyDisplay_LedMPG(grbl_data->mpgMode);
 }
 
 static void on_info_received (grbl_info_t *info)
@@ -214,7 +214,7 @@ static void displayGrblData (char *line)
 
         if(grbl_data->changed.mpg) {
 //CJ            if(grbl_data->mpgMode != signal_getMPGMode())
-//CJ                signal_setMPGMode(grbl_data->mpgMode);
+//CJ                   MyDisplay_LedMPG(grbl_data->mpgMode);
 //CJ            keypad_forward(!grbl_data->mpgMode);
             if(grbl_data->mpgMode) {
                 if(grbl_info->is_loaded)
@@ -232,14 +232,14 @@ static void displayGrblData (char *line)
                     }
 //CJ                    setMPGFactorBG(c, Black);
                 } while(c);                
-#ifdef UART_MODE
-                if(jogModePending) {
-                    jogModePending = false;
-                    serial_putC('0' + (char)jogMode);
-                }
-#endif
+//CJ #ifdef UART_MODE
+//CJ                if(jogModePending) {
+//CJ                    jogModePending = false;
+//CJ                    serial_putC('0' + (char)jogMode);
+//CJ                }
+//CJ #endif
             }
-
+            MyDisplay_LedMPG(grbl_data->mpgMode);
 //CJ            leds.mode = grbl_data->mpgMode;
 //CJ            leds_setState(leds);
 //CJ            displayBanner(grbl_data->mpgMode ? (settings->is_loaded ? Blue : Red) : White);
@@ -291,7 +291,7 @@ static void displayGrblData (char *line)
     }
 }
 
-static unsigned long eventTimeDRO;
+static unsigned long eventSignal;
 void DROProcessEvents (void)
 {
      if(!active)        
@@ -307,7 +307,7 @@ void DROProcessEvents (void)
         }
      }
      if(event & EVENT_KEYDOWN) {
-          processKeypress(DROkey, EVENT_KEYDOWN, grbl_data->spindle.rpm_actual);
+          processKeypress(DROkey, EVENT_KEYDOWN, grbl_data->spindle.rpm_actual);    // from mydisplay.ino
           //if(!keypad_has_keycode())
           event &= ~EVENT_KEYDOWN;  
      }
@@ -317,15 +317,25 @@ void DROProcessEvents (void)
      }
 
      if(event & EVENT_MPG) {
-          //processJoystick(MPGkey);          //from mydisplay.ino
+          //processJoystick(MPGkey);                    //from mydisplay.ino
           processMpg(MPGkey, MPGcnt, MPGdtime);         //from mydisplay.ino          
           event &= ~ EVENT_MPG;       
      }
-        
-    if (lcd_systicks() - eventTimeDRO > 100){
+
+     if(event & EVENT_SIGNALS){
+          eventSignal = lcd_systicks();
+          event &= ~ EVENT_SIGNALS;
+     }
+}
+
+
+static unsigned long eventTimeDRO;
+void DROSet_EventDRO (void)
+{
+    if (lcd_systicks() - eventTimeDRO > 200){
         eventTimeDRO = lcd_systicks();
         grbl_data = setGrblReceiveCallback(displayGrblData);
-        event |= EVENT_DRO;   
+        event |= EVENT_DRO;
     }
 }
 
@@ -384,6 +394,7 @@ void DROprintOut(void)
 
 void DROkeyEvent (bool keyDown, char key)
 {
+    static char buffer[80];
     // NOTE: key is read from input buffer during event processing
     if(keyDown)
         event |= EVENT_KEYDOWN;
@@ -391,6 +402,8 @@ void DROkeyEvent (bool keyDown, char key)
         event |= EVENT_KEYUP;
     DROkey = key;
     keyreleased = !keyDown;
+    sprintf(buffer, "DROkeyEvent: keyDown=%d, key=%d ", keyDown, key);
+    serial0_writeLn(buffer);
 }
 
 void DROJoystickEvent (bool change, int key)

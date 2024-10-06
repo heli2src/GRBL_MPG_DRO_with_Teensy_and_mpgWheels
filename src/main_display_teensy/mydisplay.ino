@@ -52,6 +52,7 @@ uint16_t MENU_DISABLE = C_VALUES[2];
 uint16_t TITLE_TEXT = C_VALUES[13];
 uint16_t TITLE_BACK = C_VALUES[36];
 
+#define LED_MPG              19
 
 #define ROW_HEIGHT          64          // 35
 #define ROWS                3           // 5
@@ -178,6 +179,21 @@ void ProcessTouch() {
     BtnY = p.y;
   //DEBUG("Touch ", BtnX, BtnY);     
   //Display.drawPixel(BtnX, BtnY, C_GREEN);
+}
+
+
+void MyDisplay_LedMPG(bool on){
+    if (on == 1)
+        digitalWrite(LED_MPG, HIGH);
+    else
+       digitalWrite(LED_MPG, LOW);
+}
+
+void MyDisplay_LedMPG_toggle(void){
+    if (digitalRead(LED_MPG) == 1)
+        digitalWrite(LED_MPG, LOW);
+    else
+       digitalWrite(LED_MPG, HIGH);
 }
 
 bool ProcessButtonPress(Button TheButton) {
@@ -309,9 +325,9 @@ void showMessageButtons(const char* buttonL1, const char* buttonL2, const char* 
     Display.fillRect(250, 220, 70, 30, BackColor);
     Display.setFont(F_A14); 
     Display.setCursor( 30, 220); Display.print(buttonL1);
-    Display.setCursor(115, 220); Display.print(buttonL2);
-    Display.setCursor(200, 220); Display.print(buttonR2);  
-    Display.setCursor(285, 220); Display.print(buttonR1);
+    Display.setCursor(105, 220); Display.print(buttonL2);
+    Display.setCursor(190, 220); Display.print(buttonR2);  
+    Display.setCursor(265, 220); Display.print(buttonR1);
 }
 //=======================================================================================
 
@@ -322,7 +338,7 @@ void Dinit(void) {
            {  10,   10, C_WHITE, "T0", "      --  (c) Heli2  --", 0}, // 0
            { 110,   80, C_BLUE,  "T1", "Elektronische",           0}, // 1
            { 120,  110, C_BLUE,  "T1", "Leitspindel",             0}, // 2            
-           { 130,  140, C_BLUE,  "T1", "V0.16c",                   0}, // 3
+           { 130,  140, C_BLUE,  "T1", "V0.17",                   0}, // 3
            //{ 130,  160, C_BLUE, "T", eeprom.Version,            0}, // 3
         };
         DEBUG("   Dinit: Cinit");  
@@ -371,11 +387,22 @@ void Dmenue(void){
 }
 
 void Dhome(void){
-//        DEBUG("   Dhome: Cinit");
+        DEBUG("   Dhome: Cinit");
         serial_putC(24); 
+        sprintf(buffer10, "$X ");                 // unlock
+        serial0_writeLn(buffer10);
+        serial_writeLn(buffer10);
         sprintf(buffer10, "$H");            
         serial0_writeLn(buffer10);
+        serial_writeLn(buffer10);
+        sprintf(buffer10, "G92 X0 Z0");
+        serial0_writeLn(buffer10);
         serial_writeLn(buffer10); 
+        if (mystate.lathe == 1) {
+          sprintf(buffer10, "G7");                  // enable Diameter
+          serial0_writeLn(buffer10);
+          serial_writeLn(buffer10);
+        }     
         mystate.execute = Cend; 
         mystate.state = mystate.prevstate;             
 }
@@ -561,7 +588,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
           if (mystate.lastAlarm == mystate.alarm && mystate.lastError == mystate.error)
             {}
           else {              
-            DEBUG("Dalarm: active grblstate= ", mystate.grblState,"Alarm/Error=", mystate.alarm, mystate.error, mystate.lastAlarm, mystate.lastError);            
+            DEBUG("Dalarm(Crun): grblstate= ", mystate.grblState,"Alarm/Error/lastAlarm/lastError=", mystate.alarm, mystate.error, mystate.lastAlarm, mystate.lastError);            
             mystate.lastAlarm = mystate.alarm;
             mystate.lastError = mystate.error;
           }
@@ -666,22 +693,30 @@ void Dalarm(void) {              // Widget for alarm + error messages
                   serial_putC(24);
                   sprintf(buffer10, "$X ");                 // unlock
                   serial0_writeLn(buffer10);
+                  serial_writeLn(buffer10);
                   sprintf(buffer10, "$H");
+                  serial0_writeLn(buffer10);
+                  serial_writeLn(buffer10);
+                  delay(200);
               }else if (strcmp(dbutton, "Reset")==0) {
                   DEBUG("        do: Reset");
                   serial_putC(24);                        //Reset send #24
               }else if (strcmp(dbutton, "ok")==0) {
                   DEBUG("        do: ok");
                   serial_putC(24);                         //Reset send #24 
-                  sprintf(buffer10, "$X");                 // unlock                      
+                  sprintf(buffer10, "$X");                 // Kill Alarm Lock state 
+                  serial0_writeLn(buffer10);
+                  serial_writeLn(buffer10);
+                  delay(200);                     
               }else if (strcmp(dbutton, "Unlock")==0) {
                   DEBUG("        do: Unlock");
-                  serial_putC(24);                         //Reset send #24
-                  sprintf(buffer10, "$X");                 // unlock
+                  serial_putC(24);                         // Reset send #24
+                  sprintf(buffer10, "$X");                 // Kill Alarm Lock state
+                  serial0_writeLn(buffer10);
+                  serial_writeLn(buffer10);
+                  delay(200);
+                  //serial_putC(CMD_MPG_MODE_TOGGLE);
               }
-              serial0_writeLn(buffer10);
-              serial_writeLn(buffer10);
-              delay(200);
         break;}
        }
    }
@@ -889,6 +924,9 @@ void MyDisplay_init(void) {
     mystate.stime = millis();
     mystate.buttonDtime = 0; 
     mystate.grblState = NOTCONNECT;
+
+    // init LED's
+    pinMode(LED_MPG, OUTPUT);
 }
 
 void MyDisplay_loop(void){
@@ -1017,7 +1055,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
         // in mpg mode G95 is not allowed :-(
         sprintf(command, "$J=G91 %c%.3f F%.1f", MPGkey, float(MPGcnt)*0.01, speed);   //e.q. $J=G91 Z1.000 F100.0   # G91 = relative movement
         serial_writeLn(command);
-        //DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, mystate.rpm, command);      
+        // DEBUG("cnt= ", MPGcnt, "time delta=", dtime, speed, mystate.rpm, command);      
     } 
 }
 
@@ -1025,7 +1063,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
 void processKeypress (int DROkey, int keydown, float rpm){
     // call from dro.c->DROProcessEvents 
     //char *dbutton = (char*)"-1";
-//    DEBUG("processKeypress DROkey|grblState|state=", DROkey, mystate.grblState, mystate.state, "Codes for Idle|Alarm|Run",  Idle, Alarm, Run); 
+    DEBUG("processKeypress DROkey|grblState|state=", DROkey, mystate.grblState, mystate.state, "Codes for Idle|Alarm|Run",  Idle, Alarm, Run);
     mystate.rpm = rpm;
     
     // evaluate key in the deticated page:
@@ -1035,9 +1073,16 @@ void processKeypress (int DROkey, int keydown, float rpm){
     dstate[mystate.state].function();
     mystate.execute = execute_state;
     DROkey = mystate.DROkey;
-    
+
     // evaluate key for global function: 
     switch (mystate.grblState){
+          case Idle:
+              if (DROkey == 4) {
+                  DEBUG("  Toggle MPG_Mode");   
+                  MyDisplay_LedMPG_toggle();
+                  serial_putC(CMD_MPG_MODE_TOGGLE);
+              } 
+              break;
           case Run:       // = 2
               DEBUG("  Run");   
               if (DROkey == 0) {

@@ -3,7 +3,7 @@
 // modbus https://forum.pjrc.com/threads/37018-Modbus-RTU/page2?s=0b70591297bc806d553c15a620b15758
 // https://www.pjrc.com/teensy/td_uart.html
 
-char usedAxis[] = {'X', 'Z'};
+char usedAxis[] = {'X', 'Y', 'Z', 'A'};
 byte paxis = 0x01;
 bool busy = false;
 byte readMpg[] = { 0x03, 0x03, 0x00, 0x00, 0x00, 0x03,0x85, 0xE8};       // Modbus protocoll 2,2ms sendtime
@@ -70,7 +70,7 @@ void MPGPollSerial(void){
                if (mpgValue == 0 and (abs(mpgValue-*mpgData) > 2))       // mpgwheel get a reset or power off/on, but also 0 cnt :-(
                    *mpgData = 0;
                else{
-                   //DEBUG("call DROmpgEvent: axis = ", int(mpg_data.block[0]), "cnt =", mpgValue, *mpgData); 
+                   // DEBUG("call DROmpgEvent: axis = ", int(mpg_data.block[0]), "cnt =", mpgValue, *mpgData); 
                    DROmpgEvent(true, mpg_data.block[0]+'X'-1, mpgValue-(*mpgData), dtime);          
                    *mpgData = mpgValue;
                }

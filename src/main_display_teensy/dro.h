@@ -23,6 +23,7 @@
 void DROInitCanvas (void);
 void DROShowCanvas (void);         // (lcd_display_t *screen);
 void DROProcessEvents(void);
+void DROSet_EventDRO (void);
 void DROkeyEvent (bool keyDown, char key);
 void DROJoystickEvent (bool change, int key);
 void DROmpgEvent (bool change, int key, int cnt, int modeswitch);
