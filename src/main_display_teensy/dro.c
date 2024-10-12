@@ -298,12 +298,14 @@ void DROProcessEvents (void)
         return;
 
      if(event) {                  
-        if(event & EVENT_DRO) {
+        if(event & EVENT_DRO) {                     // will be set from DROSet_EventDRO with 5Hz
             event &= ~EVENT_DRO;
 //            if(!mpgMove && settings->is_loaded)
 //                serial_putC(grbl_data->awaitWCO ? CMD_STATUS_REPORT_ALL : mapRTC2Legacy(CMD_STATUS_REPORT)); // Request realtime status from grbl
               //serial_putC(CMD_STATUS_REPORT_ALL);
-              serial_putC(mapRTC2Legacy(CMD_STATUS_REPORT));         
+              if (grbl_data->mpgMode) {
+                  serial_putC(mapRTC2Legacy(CMD_STATUS_REPORT));
+              }  
         }
      }
      if(event & EVENT_KEYDOWN) {

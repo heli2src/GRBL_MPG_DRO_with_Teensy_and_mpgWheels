@@ -78,10 +78,10 @@ typedef struct {
 
 struStates  dstate[WEND+1] = {   //assign numstate to the the calling function and define a parameter
 // numstate, function, para
-  {    WSTART,   Dinit,   0},         // 0 
-  {     Wmain,   Dmain,   0},         // 1
-  {      WNUM,    Dnum,   0},         // 2
-  {  WAOFFSET, Doffset,   0},         // 3
+  {    WSTART,   Dinit,   0},         // 0         startwindow
+  {     Wmain,   Dmain,   0},         // 1         manuell Aussendrehen
+  {      WNUM,    Dnum,   0},         // 2         Tastatur
+  {  WAOFFSET, Doffset,   0},         // 3         set z- or x-achse to 0
   {    WMENUE,  Dmenue,   0},         // 4
   {    WALARM,  Dalarm,   0},         // 5
   {     WHOME,   Dhome,   0},         // 6

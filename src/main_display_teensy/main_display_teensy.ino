@@ -19,7 +19,7 @@
  *            mpg mode -> Pin 18
  *            
  *  - LED
- *            mpg mode -> Pin 19
+ *            mpg mode -> Pin 19            // related function: MyDisplay_LedMPG
  *            
  *  - Uart
  +       for communication with the grblHAL:

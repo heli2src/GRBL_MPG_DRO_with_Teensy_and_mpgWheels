@@ -14,6 +14,8 @@ The canvas structure from Terjeio project was unfortunately difficult for me to 
 \
 The requirement is that the [grbHAL driver](https://github.com/grblHAL) is used as the CNC controller. The UART input is then used to communicate with the display and the MPGs. I use the [grbl-teensy-4](https://github.com/phil-barrett/grblHAL-teensy-4.x) board to control the motors and the connections of the inputs and outputs.  You cannot use USB and Uart at the same time with this board. USB is therefore switched off. If you want to run CNC programs, you have to connect the board to your network via Ethernet. I then use the [IoSender](https://github.com/terjeio/ioSender) as user interface.
 \
+The display can be used as a pure display when processing CNC code (sent via ioSender) or as a display and control unit when controlling the milling machine or lathe manually. Switching is done with a button on the display. An LED indicates the current mode.
+\
 \
 There is still some tidying up to be done, but certain extensions are even more important at the moment for proper working.
 The Source code not ready yet, there are some bugs, use it carfully!
@@ -23,14 +25,13 @@ Features:
 - Control board with a SPI LCD and touch interface (ILI9341 320x240), connect via Uart with the [grbHAL driver](https://github.com/grblHAL).
 - each MPG wheels has its own Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) connected via rs485 with the control board.
   Own control switches and a small display is possible (SSD1306 via I2C).
-
+- Switching from pure DRO for external CNC code and manual operation with the handwheels, and simple cycles such as turning cones or any thread.
 \
 \
 Here I have converted my lathe, a Quantum D240x400E.
 With the wheels you can also use the machine conventionally. In some cases, you can also drive certain cycles very easily. However, this has only been implemented in a rudimentary way so far.
 
 <img src="docs/images/lathe_1.jpg"></img>
-
 \
 \
 \
@@ -60,9 +61,8 @@ Following libs are used:
 
 ### Todo
 
-- Switching between IoSender (PC) and the control via the GRBL_MPG does not yet work. It is not yet possible to use both, for example to approach the workpiece with the MPG wheels and then start the CNC program.
 - The rotational speed of the wheels is not yet properly evaluated. As a result, the whole thing still runs a little rough.
 - Simultaneous driving of 2-axes over the wheels does not yet work in practice.
-- More axis travel via the screen is not yet possible
+- More axis travel via the screen is not yet possible, but in work....
 - The entire software is still under construction, which is why there is no release yet.
   
