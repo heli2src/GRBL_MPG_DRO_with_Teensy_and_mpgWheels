@@ -80,9 +80,15 @@
 #include <SerialDebug.h>
 #include <avr/wdt.h>
 #include "para_eeprom.h"
-#include "ILI9341_t3_Controls.h"
 #include "dro.h"
 #include "mydisplay.h"
+
+#ifdef ILI9341
+    #include "ILI9341_t3_Controls.h"
+#endif
+#ifdef ILI9488
+    #include "ILI9488_t3_controls.h"
+#endif
 
 void watchdogSetup (void){} // muss definiert werden, denn die default Funktion macht ein: WDT_Disable (WDT);
 // und das Disable verhindert den nächste enable see https://forum.arduino.cc/index.php?topic=450355.0

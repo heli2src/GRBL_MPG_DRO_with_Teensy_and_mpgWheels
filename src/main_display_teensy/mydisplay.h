@@ -2,7 +2,7 @@
 **************************************************************************
 **
 */
-/**!   \file diplay_ILI9341.h		
+/**!   \file mydisplay.h		
 **     \brief Header file for the display
 **      Display 240 x 320     
 **
@@ -15,7 +15,16 @@
 **
 **************************************************************************
 */
-#include "font_Arial.h"
+#ifndef _MYDISPLAY_H_
+#define _MYDISPLAY_H_
+
+#ifdef ILI9341
+    #include "font_Arial.h"
+#endif
+
+#ifdef ILI9488
+    #include "ili9488_t3_font_Arial.h"
+#endif
 
 #ifdef __cplusplus
  extern "C" {
@@ -24,7 +33,7 @@
 /* -------
    DEFINES
   -------- */
-#define LATHEMODE
+// #define LATHEMODE
 #define BLINKDELAY 500
 
 //defining fonts
@@ -56,6 +65,7 @@
 #define BROW3 170
 
 #define Font   ILI9341_t3_font_t
+
 
 typedef enum {
    Align_Left,
@@ -226,4 +236,6 @@ void MyDisplay_LedMPG(bool on);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

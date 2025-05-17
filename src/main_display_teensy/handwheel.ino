@@ -26,7 +26,7 @@ RS485SERIAL.begin(38400);     //modubus rs485
 //addMemoryForWrite( buffer, size);
 }
 
-uint _calculate_crc_string(char* buffer, uint length){
+uint _calculate_crc_string(byte* buffer, uint length){
   uint result = 0xFFFF;
   for(unsigned int i = 0; i<length; i++) {
     result = (result >> 8) ^ _CRC16TABLE[(result ^ int(buffer[i])) & 0xFF];

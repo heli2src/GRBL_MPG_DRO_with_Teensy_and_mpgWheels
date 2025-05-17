@@ -16,16 +16,26 @@
   IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 #include <SerialDebug.h>
-#include "ILI9341_t3_Menu.h"          // custom utilities definition
-#include "ILI9341_t3.h"           // fast display driver lib            https://github.com/PaulStoffregen/ILI9341_t3
-#include <font_Arial.h>           // custom fonts that ships with ILI9341_t3.h
-#include <font_ArialBold.h>       // custom fonts for the ILI9341_t3.h
+#ifdef ILI9341
+    #include "ILI9341_t3_Menu.h"      // custom utilities definition
+    #include "ILI9341_t3.h"           // fast display driver lib            https://github.com/PaulStoffregen/ILI9341_t3
+    #include "ILI9341_t3_Controls.h"  // https://github.com/KrisKasprzak/ILI9341_t3_controls
+    #include <font_Arial.h>           // custom fonts that ships with ILI9341_t3.h
+    #include <font_ArialBold.h>       // custom fonts for the ILI9341_t3.h    
+#endif
+#ifdef ILI9488
+    #include "ILI9488_t3_Menu.h"      // custom utilities definition
+    #include "ILI9488_t3.h"           // fast display driver lib            https://github.com/PaulStoffregen/ILI9488_t3
+    #include "ILI9488_t3_controls.h"  // https://github.com/KrisKasprzak/ILI9488_t3_controls
+    #include "ili9488_t3_font_Arial.h"
+    #include "ili9488_t3_font_ArialBold.h"
+#endif
+
 #include <XPT2046_Calibrated.h>   // increase Z_THRESHOLD in XPT2046_Calibrated.cpp if touchscreen is to sensitiv, add line 129: if (z > 4095) z = 0;
 #include "myTouchCalibration.h"
 #include <FlickerFreePrint.h>     // library to draw w/o flicker        https://github.com/KrisKasprzak/FlickerFreePrint
-#include "ILI9341_t3_Controls.h"  // https://github.com/KrisKasprzak/ILI9341_t3_controls
+
 
 #include "error_alarmcodes.h"
 
@@ -152,14 +162,25 @@ uint16_t TextColor = C_WHITE;
 char buffer10[INPUTBUFFER];          // buffer for use in self defined functions
 
 
+#ifdef ILI9341
+    ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
+    FlickerFreePrint<ILI9341_t3> Flickerlabel[4]= {
+         FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background
+         FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
+         FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
+         FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
+    };
+#endif
 
-ILI9341_t3 Display = ILI9341_t3(TFT_CS, TFT_DC);
-FlickerFreePrint<ILI9341_t3> Flickerlabel[4]= {
-     FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background
-     FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
-     FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
-     FlickerFreePrint<ILI9341_t3>(&Display, ILI9341_WHITE, ILI9341_BLACK),     // Foreground, background     
-};
+#ifdef ILI9488
+    ILI9488_t3 Display = ILI9488_t3(TFT_CS, TFT_DC);
+    FlickerFreePrint<ILI9488_t3> Flickerlabel[4]= {
+         FlickerFreePrint<ILI9488_t3>(&Display, ILI9488_WHITE, ILI9488_BLACK),     // Foreground, background
+         FlickerFreePrint<ILI9488_t3>(&Display, ILI9488_WHITE, ILI9488_BLACK),     // Foreground, background     
+         FlickerFreePrint<ILI9488_t3>(&Display, ILI9488_WHITE, ILI9488_BLACK),     // Foreground, background     
+         FlickerFreePrint<ILI9488_t3>(&Display, ILI9488_WHITE, ILI9488_BLACK),     // Foreground, background     
+    };
+#endif
 
 Button Buttons[MAXBUTTONS] = {Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),
                               Button(&Display), Button(&Display), Button(&Display), Button(&Display), Button(&Display),
@@ -528,7 +549,7 @@ void Dmain(void) {              // Aussendrehen
                             return;
                             break;}
               }
-              sprintf(command, "");                                                      
+              sprintf(command, "\n");                                                      
               if (mystate.DROkey % 10  == 1){           // left button
                   if (mystate.rpm == 0.0) {
                       sprintf(command, "G94 F%.3f G90 G01 %c%.3f", targetfmin, axis, targetaxis);
@@ -540,7 +561,7 @@ void Dmain(void) {              // Aussendrehen
                   sprintf(buffer10, "%.3f", mystateaxis);
                   switch (axis) {
                       case 'X': {target.x = mystateaxis;
-                                 char index = 0;
+                                 byte index = 0;
                                  if (mystate.lathe == 1)
                                      index = 1;
                                  Buttons[index].setText(buffer10);
@@ -1042,7 +1063,7 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
         // DEBUG(mystate.grblState, Idle, Jog, mystate.state, MPGkey);
         float speed;
         unsigned long time = millis();
-        unsigned long dtime = time-mystate.mpgtime[index];
+        // unsigned long dtime = time-mystate.mpgtime[index];
         mystate.mpgtime[index] = time;   
         if (abs(MPGcnt) < 5) speed = eeprom.fzjog001;
         else if (abs(MPGcnt) < 20) speed = eeprom.fzjog01;
@@ -1068,7 +1089,7 @@ void processKeypress (int DROkey, int keydown, float rpm){
     
     // evaluate key in the deticated page:
     mystate.DROkey = DROkey;
-    int execute_state = mystate.execute; 
+    call_enum_t execute_state = mystate.execute; 
     mystate.execute = Ckeys;
     dstate[mystate.state].function();
     mystate.execute = execute_state;

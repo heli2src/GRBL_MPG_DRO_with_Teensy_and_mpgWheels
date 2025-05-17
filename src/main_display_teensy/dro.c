@@ -6,8 +6,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
-#include <font_Arial.h>
-//#include <font_ArialBold.h>
+
+#ifdef ILI9341
+    #include <font_Arial.h>           // custom fonts that ships with ILI9341_t3.h
+    // #include <font_ArialBold.h>       // custom fonts for the ILI9341_t3.h    
+#endif
+#ifdef ILI9488
+    #include "ili9488_t3_font_Arial.h"
+    // #include "ili9488_t3_font_ArialBold.h"
+#endif
+
 #include "main_display_teensy.h"
 #include "dro.h"
 #include "mydisplay.h"
@@ -17,9 +25,9 @@
 #define STATUSROW 218
 #define MSGROW 238
 #ifdef LATHEMODE
-#define XROW 110
+    #define XROW 110
 #else
-#define XROW 62
+    #define XROW 62
 #endif
 #define YROW XROW + 50
 #define ZROW YROW + 50
@@ -56,11 +64,10 @@ typedef struct {
 //
 
 volatile uint_fast8_t event = 0;
-static uint_fast8_t mpg_axis = X_AXIS;
-static float mpg_rpm = 200.0f;
+//static float mpg_rpm = 200.0f;
 static bool mpgMove = false, endMove = false;
 static bool jogging = false, keyreleased = true, disableMPG = false, mpgReset = false, active = false;
-static event_counters_t event_count;
+//static event_counters_t event_count;
 static grbl_data_t *grbl_data = NULL;
 static Canvas *canvasMain = 0;
 
@@ -389,7 +396,7 @@ void DROGetInfo(void)
 
 void DROprintOut(void)
 {
-  static char buffer[80];
+  static char buffer[125];
   sprintf(buffer, "DROprintOut: is_loaded=%d, lathe=%d, mpg=%d, %s ", grbl_info->is_loaded, grbl_info->options.lathe, grbl_data->mpgMode, grbl_info->device);
   serial0_writeLn(buffer);
 }
@@ -427,7 +434,7 @@ void DROmpgEvent (bool change, int key, int cnt, int dtime)
 
 void DROShowCanvas (void)           // (lcd_display_t *lcd_screen)
 {  
-   int_fast8_t i;
+//   int_fast8_t i;
    
    if(!canvasMain) {
 

@@ -14,7 +14,7 @@ typedef struct {
     int y_switch;
     int z_switch;
     int a_switch;     
-    char block[MPG_BLOCK_LENGTH];
+    byte block[MPG_BLOCK_LENGTH];
     unsigned long latest_read_time;
 } mpg_data_t;
 

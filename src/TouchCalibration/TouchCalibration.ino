@@ -17,6 +17,9 @@
 // --
 //
 // how to use this library:
+// zuerst mit updateScreenEdges(p);
+//           [X_LO, X_HI] [Y_LO, Y_HI] aufnehmen und in #defines von  XPT2046_X_LO, XPT2046_X_HI, XPT2046_Y_LO, XPT2046_Y_HI eintragen
+//
 //
 //   1. usage of this library is identical to XPT2046_Touchscreen. however, to
 //      enable calibration, after calling begin() and setRotation(), you must
@@ -67,12 +70,13 @@
 
 #include <XPT2046_Calibrated.h>
 #include <Adafruit_ILI9341.h> // or Adafruit_ILI9341.h
+
 #include <SPI.h>
 
 // -- CONFIGURATION --
 
 //#define LATHEMODE
-#define VERIFY_CALIBRATION
+//#define VERIFY_CALIBRATION
 
 #define TS_CS_PIN   3
 
@@ -170,21 +174,26 @@ void setup() {
     { crosshair(_screenPoint[i]); }
 }
 
+static char pbuf[128] = { '\0' };
+
 void loop() {
 
   if (touched()) {
 
     TS_Point p = ts.getPoint();
 
-    Serial.println(p.z);
+     if (((uint16_t)p.x < (uint16_t) 0xFF00) && ((uint16_t)p.y < (uint16_t) 0xFF00) && ((uint16_t)p.z > (uint16_t) 900)) {
+        // updateScreenEdges(p);      
 
-    updateScreenEdges(p);
+        snprintf(pbuf, 128, "x=%u, y=%u, z=%u ", p.x, p.y, p.z);
+    //    Serial.println(pbuf);
 
     // determine which screen point is closest to this touch event
-    PointID n = nearestScreenPoint(p);
+        PointID n = nearestScreenPoint(p);
 
     // update the corresponding line mapping
     drawMapping(n, p);
+     }
 
     delay(30);
   }
@@ -240,7 +249,7 @@ void drawMapping(PointID n, TS_Point tp) {
   TS_Point sp = _screenPoint[(int)n];
 
   // construct the line buffer
-  snprintf(buf, BUF_LEN, "%c (%u,%u) = (%u,%u)",
+  snprintf(buf, BUF_LEN, "%c (%u,%u)= (%u,%u)  ",
     (uint8_t)n + 'A', sp.x, sp.y, tp.x, tp.y);
 
   // print the current line to serial port for debugging
@@ -269,9 +278,9 @@ void drawMapping(PointID n, TS_Point tp) {
 
 #else
    #define XPT2046_X_LO 4095
-   #define XPT2046_X_HI 679
-   #define XPT2046_Y_LO 3359
-   #define XPT2046_Y_HI 723
+   #define XPT2046_X_HI 591
+   #define XPT2046_Y_LO 3668
+   #define XPT2046_Y_HI 671
 #endif
 #define MAP_2D_PORTRAIT(x, y)                                        \
   TS_Point(                                                          \
@@ -284,8 +293,8 @@ void drawMapping(PointID n, TS_Point tp) {
     (int16_t)map((y), XPT2046_X_LO, XPT2046_X_HI, 0, SCREEN_HEIGHT)  \
   )
 void updateScreenEdges(TS_Point p) {
-  static uint16_t xHi = 0xFFFF;
-  static uint16_t yHi = 0xFFFF;
+  static uint16_t xHi = 0xFF00;
+  static uint16_t yHi = 0xFF00;
   static uint16_t xLo = 0x0;
   static uint16_t yLo = 0x0;
   if (p.x < xHi) { xHi = p.x; }
