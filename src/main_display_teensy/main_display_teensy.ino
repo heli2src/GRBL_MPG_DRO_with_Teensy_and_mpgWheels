@@ -67,7 +67,6 @@
  *      - tastendruck hält alles an :-(   -> umbauen auf millis
         - mpg stop abfragen und auswerten !!
         - mpg slave id must be changed for each achse
-        - start.taste am Display geht nicht mehr??
         - speed von mpg bei x10, x100 über Fz, Fx einstellungen
         - check axis A : handwheel unkomment Debug 'call DROmpgEvent'
 *       - use 3,5" ILI9488  https://github.com/jaretburkett/ILI9488
