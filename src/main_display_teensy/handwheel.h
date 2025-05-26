@@ -1,3 +1,6 @@
+#ifndef _HANDWHEEL_H_
+#define _HANDWHEEL_H_
+
 #define RS485SERIAL Serial3
 #define MPG_BLOCK_LENGTH 12
 
@@ -39,3 +42,5 @@ uint _CRC16TABLE[] = {
     34561, 18368, 18048, 34369, 33281, 17088, 17280, 33601, 16640, 33217, 32897, 16448};
 
 mpg_data_t mpg_data;
+
+#endif

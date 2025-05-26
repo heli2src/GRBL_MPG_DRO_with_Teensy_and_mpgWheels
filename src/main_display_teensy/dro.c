@@ -159,7 +159,7 @@ static void displayGrblData (char *line)
             settings->is_loaded = false;
 
         if(grbl_data->changed.state) {
-            set_grblstate(grbl_data->grbl.state, grbl_data->grbl.state_text, grbl_data->grbl.state_color, grbl_data->alarm, grbl_data->error, grbl_info->options.lathe);   // update the state to mydisplay
+            set_myDisplay(grbl_data->grbl.state, grbl_data->grbl.state_text, grbl_data->grbl.state_color, grbl_data->alarm, grbl_data->error, grbl_info->options.lathe);   // update the state to mydisplay
 //CJ            if  (grbl_data->grbl.state != Alarm)      
 //CJ            leds.run = grbl_data->grbl.state == Run || grbl_data->grbl.state == Jog;
 //CJ            leds.hold = grbl_data->grbl.state == Hold;
@@ -310,6 +310,7 @@ void DROProcessEvents (void)
 //            if(!mpgMove && settings->is_loaded)
 //                serial_putC(grbl_data->awaitWCO ? CMD_STATUS_REPORT_ALL : mapRTC2Legacy(CMD_STATUS_REPORT)); // Request realtime status from grbl
               //serial_putC(CMD_STATUS_REPORT_ALL);
+
               if (grbl_data->mpgMode) {
                   serial_putC(mapRTC2Legacy(CMD_STATUS_REPORT));
               }  

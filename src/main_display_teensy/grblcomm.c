@@ -297,8 +297,12 @@ static void parseData (char *block)
     bool pins = true;
     char *line = &buf[0];
 
+    //serial0_writeLn("   parseData:");
+    //serial0_writeLn(buf);   
+
     if((ack_received = !strcmp(block, "ok"))) {
         grbl_data.changed.await_ack = false;
+        // serial0_writeLn("   parseData: clear Error/Alarms");
         grblClearError(); // TODO: grbl needs to be fixed for continuing to process from input buffer after error...
         if(grbl_data.alarm)
             grblClearAlarm();

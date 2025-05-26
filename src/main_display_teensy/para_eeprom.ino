@@ -4,7 +4,7 @@
 
 void  eeprom_read(void){
     EEPROM.get( 0, eeprom );
-    DEBUG(eeprom.Copyright, eeprom.Version);
+    DEBUG("EEPROM Data:", eeprom.Copyright, eeprom.Version);
     DEBUG("Background",eeprom.BGred,eeprom.BGgreen,eeprom.BGblue);
     DEBUG("Default",eeprom.fzmin);
 }
@@ -15,7 +15,7 @@ void eeprom_write(void){
 
 void eeprom_write_default(void){
     strcpy(eeprom.Copyright, "Heli2");
-    strcpy(eeprom.Version, "V0.0.17");
+    strcpy(eeprom.Version, "V1.0");
     eeprom.BGred = 0;
     eeprom.BGgreen = 0;
     eeprom.BGblue = 0;

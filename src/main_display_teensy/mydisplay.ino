@@ -89,7 +89,7 @@ typedef struct {
 struStates  dstate[WEND+1] = {   //assign numstate to the the calling function and define a parameter
 // numstate, function, para
   {    WSTART,   Dinit,   0},         // 0         startwindow
-  {     Wmain,   Dmain,   0},         // 1         manuell Aussendrehen
+  {     Wmain,   Dmain,   0},         // 1         manuell Aussendrehen/Fräsen
   {      WNUM,    Dnum,   0},         // 2         Tastatur
   {  WAOFFSET, Doffset,   0},         // 3         set z- or x-achse to 0
   {    WMENUE,  Dmenue,   0},         // 4
@@ -121,6 +121,7 @@ typedef struct {
 
 typedef struct {
     int lathe = 0;
+    bool mpgMode = false;
     int state = WSTART;
     call_enum_t execute;    
     int oldstate = -1;    
@@ -204,10 +205,13 @@ void ProcessTouch() {
 
 
 void MyDisplay_LedMPG(bool on){
-    if (on == 1)
+    if (on == 1) {
         digitalWrite(LED_MPG, HIGH);
-    else
+        mystate.mpgMode = true;
+    } else {
        digitalWrite(LED_MPG, LOW);
+       mystate.mpgMode = false;
+    }
 }
 
 void MyDisplay_LedMPG_toggle(void){
@@ -306,7 +310,16 @@ void showMessage(void){         // display a status and Button Line in the lower
        if (mystate.svisible){
            Display.setFont(F_A20);             
            Display.setCursor(100, 220);
-           sprintf(buffer10, mystate.grblStateText);
+           // sprintf(buffer10, mystate.grblStateText);
+           if (mystate.grblState == Idle) {
+               if (mystate.mpgMode)
+                   sprintf(buffer10, "%s-mpg", mystate.grblStateText);
+                else
+                   sprintf(buffer10, "%s-dro", mystate.grblStateText);
+           } else {
+               sprintf(buffer10, "%s", mystate.grblStateText);
+           }
+
            Display.setTextColor(mystate.color_grblState);
            if (mystate.error > 0){
               sprintf(buffer10, "ERROR:%d", mystate.error);           // ERROR has Prio 0 for display
@@ -329,13 +342,15 @@ void showMessage(void){         // display a status and Button Line in the lower
        mystate.stime = millis();
     }
     if (mystate.svisible && mystate.change_grblState) {    // Display active buttons
-        mystate.change_grblState = false;  
- //       if (mystate.grblState == Idle) {
- //           showMessageButtons("Start", "", "", "Z=0");
- //       }else if (mystate.grblState == Run){
- //           mystate.alarm = 0;
- //           showMessageButtons("Stop", "", "", "");
- //       }
+        //DEBUG("showMessage: active buttons");
+        mystate.change_grblState = false;
+        //DEBUG("            not buttons active");
+        if (mystate.grblState == Idle) {
+            showMessageButtons("Start", "", "", "drive0");
+        }else if (mystate.grblState == Run){
+            mystate.alarm = 0;
+            showMessageButtons("Stop", "", "", "");
+        }
     }else if (!mystate.svisible)
         mystate.change_grblState = true;
 }
@@ -357,10 +372,9 @@ void Dinit(void) {
     case Cinit: {    
         struPage mytext[]= {
            {  10,   10, C_WHITE, "T0", "      --  (c) Heli2  --", 0}, // 0
-           { 110,   80, C_BLUE,  "T1", "Elektronische",           0}, // 1
-           { 120,  110, C_BLUE,  "T1", "Leitspindel",             0}, // 2            
-           { 130,  140, C_BLUE,  "T1", "V0.17",                   0}, // 3
-           //{ 130,  160, C_BLUE, "T", eeprom.Version,            0}, // 3
+           {  90,   80, C_BLUE,  "T1", "MPG/DRO Display",         0}, // 1
+           { 120,  110, C_BLUE,  "T1", " ",             0},           // 2            
+           { 130,  140, C_BLUE,  "T1", VERSION,                   0}, // 3
         };
         DEBUG("   Dinit: Cinit");  
         showPage(sizeof(mytext)/sizeof(struPage), mytext);
@@ -370,11 +384,13 @@ void Dinit(void) {
         break;}
    case Crun:{
         if (millis()-mystate.stime > 2000) {
-            mystate.state = Wmain;
+            mystate.execute = Cend;
         }
         break;}
    case Cend: {
-        DEBUG("   Dinit: Cend");      
+        DEBUG("   Dinit: Cend");
+        serial_putC(CMD_STATUS_REPORT_ALL);                     // get the first Report, to validate the display
+        mystate.state = Wmain;    
         break;}
    case Ckeys:{
         DEBUG("   Dmenue Ckeys", mystate.DROkey);  
@@ -413,7 +429,7 @@ void Dhome(void){
         sprintf(buffer10, "$X ");                 // unlock
         serial0_writeLn(buffer10);
         serial_writeLn(buffer10);
-        sprintf(buffer10, "$H");            
+        sprintf(buffer10, "$H");
         serial0_writeLn(buffer10);
         serial_writeLn(buffer10);
         sprintf(buffer10, "G92 X0 Z0");
@@ -495,7 +511,7 @@ void Dmain(void) {              // Aussendrehen
     // die Tasten selber werden dann in dro.c/processKeypress bearbeitet.
     // die schnellen Anzeigen, werden mit drawString() in dro.c geschrieben
         if (target.changed) {
-            DEBUG("   Dmain Crun", target.x, target.y, target.z);
+            DEBUG("   Dmain Crun target(x/y/z)", target.x, target.y, target.z, "grblstate=", mystate.grblState);
             if (mystate.lathe == 1) {
                 sprintf(buffer10, "%.3f", target.fz);
                 Buttons[0].setText(buffer10);
@@ -522,11 +538,23 @@ void Dmain(void) {              // Aussendrehen
    case Ckeys:{
           char axis;
           float mystateaxis;
-          axis = mystate.DROkey / 10 + 'X' -1;
+          char ff[] = "G94";
+          if (mystate.DROkey < 10)
+              axis = 'a';
+          else
+              axis = mystate.DROkey / 10 + 'X' -1;
           DEBUG("   Dmain Ckeys", mystate.DROkey, axis); 
+
           if (mystate.grblState == Idle) {        // = 1
               float targetfmin, targetf, targetaxis;
               switch (axis) {
+                  case 'a': {
+                            if (mystate.DROkey == 0) {
+                                sprintf(command, "G94F%.3fG90G01X%.3fY%.3fZ%.3f", target.fxmin, target.x, target.y, target.z);      // mm/min
+                            }else if (mystate.DROkey == 3) {
+                                sprintf(command, "G00X0Y0Z0");
+                            }
+                            break;}
                   case 'X': {targetfmin = target.fxmin;
                             targetf = target.fx;
                             targetaxis = target.x; 
@@ -549,12 +577,13 @@ void Dmain(void) {              // Aussendrehen
                             return;
                             break;}
               }
-              sprintf(command, "\n");                                                      
-              if (mystate.DROkey % 10  == 1){           // left button
+              if (mystate.DROkey < 10){
+                // all axis...
+              }else if (mystate.DROkey % 10  == 1){           // left button
                   if (mystate.rpm == 0.0) {
-                      sprintf(command, "G94 F%.3f G90 G01 %c%.3f", targetfmin, axis, targetaxis);
+                      sprintf(command, "G94 F%.3f G90 G01 %c%.3f", targetfmin, axis, targetaxis);         // mm/min
                   }else{
-                      sprintf(command, "G95 F%.3f G90 G01 %c%.3f", targetf, axis, targetaxis);
+                      sprintf(command, "G95 F%.3f G90 G01 %c%.3f", targetf, axis, targetaxis);            // mm/U
                   }
               }else if (mystate.DROkey % 10  == 4 and mystateaxis != 0.0) {     // right button drive axis to 0
                   sprintf(command, "G00 %c0", axis);
@@ -582,8 +611,10 @@ void Dmain(void) {              // Aussendrehen
                   DEBUG(" set axis to 0", axis);
                   sprintf(command, "G92 %c0", axis);
               }
+              else
+                  sprintf(command, "\n");
               mystate.DROkey = -1;
-              serial0_writeLn(command);
+              DEBUG(command);
               serial_writeLn(command);
           }else if (mystate.grblState == Run) { 
               if (mystate.DROkey % 10  == 1){
@@ -596,26 +627,7 @@ void Dmain(void) {              // Aussendrehen
 }
 
 void Dalarm(void) {              // Widget for alarm + error messages
-   switch (mystate.execute) {
-    case Crun: {
-      if (mystate.grblState == Idle && mystate.alarm==0 && mystate.error==0 && mystate.prevstate != WSTART){// everything is ok, so switch to previous state
-          mystate.state =  mystate.prevstate;
-          DEBUG("Dalarm: alarm/error cleared", mystate.grblState, "switch to", mystate.state);
-          mystate.execute = Cend;
-      }else if (mystate.prevstate == WSTART) {     // && mystate.MPGkey == 0) {
-          mystate.state =  mystate.prevstate;
-          DEBUG("Dalarm: Start ok, switch to ", mystate.state);
-      }else{        
-          if (mystate.lastAlarm == mystate.alarm && mystate.lastError == mystate.error)
-            {}
-          else {              
-            DEBUG("Dalarm(Crun): grblstate= ", mystate.grblState,"Alarm/Error/lastAlarm/lastError=", mystate.alarm, mystate.error, mystate.lastAlarm, mystate.lastError);            
-            mystate.lastAlarm = mystate.alarm;
-            mystate.lastError = mystate.error;
-          }
-      break;
-      }
-    }    
+   switch (mystate.execute) {  
     case Cinit: {
         DEBUG("Dalarm: Cinit");
         //for (int index = 1; index <MAXBUTTONS; index++) {
@@ -672,6 +684,25 @@ void Dalarm(void) {              // Widget for alarm + error messages
         mystate.lastError = mystate.error;
         break;
     }
+    case Crun: {
+      if (mystate.grblState == Idle && mystate.alarm==0 && mystate.error==0 && mystate.prevstate != WSTART){// everything is ok, so switch to previous state
+          mystate.state =  mystate.prevstate;
+          DEBUG("Dalarm: alarm/error cleared", mystate.grblState, "switch to", mystate.state);
+          mystate.execute = Cend;
+      }else if (mystate.prevstate == WSTART) {     // && mystate.MPGkey == 0) {
+          mystate.state =  mystate.prevstate;
+          DEBUG("Dalarm: Start ok, switch to ", mystate.state);
+      }else{        
+          if (mystate.lastAlarm == mystate.alarm && mystate.lastError == mystate.error)
+            {}
+          else {              
+            DEBUG("Dalarm(Crun): grblstate= ", mystate.grblState,"Alarm/Error/lastAlarm/lastError=", mystate.alarm, mystate.error, mystate.lastAlarm, mystate.lastError);            
+            mystate.lastAlarm = mystate.alarm;
+            mystate.lastError = mystate.error;
+          }
+      break;
+      }
+    }
     case Cend: {
         DEBUG("   Dalarm: Cend bindex|fvalue|state|oldstate|prevstate", mystate.bindex, input.fvalue, mystate.state, mystate.oldstate, mystate.prevstate,);
         DEBUG("         Alarm=", mystate.alarm, "Error=", mystate.error);
@@ -712,7 +743,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
               if (strcmp(dbutton, "Home")==0){
                   DEBUG("        do: Home");
                   serial_putC(24);
-                  sprintf(buffer10, "$X ");                 // unlock
+                  sprintf(buffer10, "$X");                 // unlock
                   serial0_writeLn(buffer10);
                   serial_writeLn(buffer10);
                   sprintf(buffer10, "$H");
@@ -732,6 +763,7 @@ void Dalarm(void) {              // Widget for alarm + error messages
               }else if (strcmp(dbutton, "Unlock")==0) {
                   DEBUG("        do: Unlock");
                   serial_putC(24);                         // Reset send #24
+                  delay(200);
                   sprintf(buffer10, "$X");                 // Kill Alarm Lock state
                   serial0_writeLn(buffer10);
                   serial_writeLn(buffer10);
@@ -1023,7 +1055,8 @@ void drawString (uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint
     }
 }
 
-void set_grblstate(int value, const char* string, uint16_t color, int alarm, int error, int lathe)
+void set_myDisplay(int value, const char* string, uint16_t color, int alarm, int error, int lathe)
+// will be called from grblcomm.parseData(grbl_data)
 {
     //if (value != mystate.grblState) {
     {
@@ -1084,7 +1117,8 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
 void processKeypress (int DROkey, int keydown, float rpm){
     // call from dro.c->DROProcessEvents 
     //char *dbutton = (char*)"-1";
-    DEBUG("processKeypress DROkey|grblState|state=", DROkey, mystate.grblState, mystate.state, "Codes for Idle|Alarm|Run",  Idle, Alarm, Run);
+
+    DEBUG("processKeypress DROkey=", DROkey, "State=", mystate.grblState, mystate.grblStateText, mystate.message);
     mystate.rpm = rpm;
     
     // evaluate key in the deticated page:
@@ -1097,19 +1131,26 @@ void processKeypress (int DROkey, int keydown, float rpm){
 
     // evaluate key for global function: 
     switch (mystate.grblState){
-          case Idle:
-              if (DROkey == 4) {
-                  DEBUG("  Toggle MPG_Mode");   
-                  MyDisplay_LedMPG_toggle();
-                  serial_putC(CMD_MPG_MODE_TOGGLE);
-              } 
-              break;
-          case Run:       // = 2
+          case Run:       // == 2
               DEBUG("  Run");   
               if (DROkey == 0) {
                   DEBUG("Stop");       
                   serial_putC(CMD_STOP);
               }
+              break;
+          case Idle:
+              if (DROkey == 4) {
+                  DEBUG("  Toggle MPG_Mode");
+                  MyDisplay_LedMPG_toggle();
+                  serial_putC(CMD_MPG_MODE_TOGGLE);
+              } 
+              break;
+          case Alarm:       // == 5
+              if (DROkey == 4) {
+                  DEBUG("  Toggle MPG_Mode");   
+                  MyDisplay_LedMPG_toggle();
+                  serial_putC(CMD_MPG_MODE_TOGGLE);
+              } 
               break;
     }
 }

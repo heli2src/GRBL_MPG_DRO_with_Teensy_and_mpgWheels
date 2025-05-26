@@ -12,11 +12,11 @@
  *  free Pins:
  *  - 4-6, 16-23
  *  used Pins:
- *  - Buttons left  ->  Pin 14
- *            left1 ->  Pin 15
- *            right1->  Pin 16 
- *            right ->  Pin 17 
- *            mpg mode -> Pin 18
+ *  - Buttons left  ->  Pin 14          DROkey= 0
+ *            left1 ->  Pin 15                = 1
+ *            right1->  Pin 16                = 2
+ *            right ->  Pin 17                = 3
+ *            mpg mode -> Pin 18              = 4
  *            
  *  - LED
  *            mpg mode -> Pin 19            // related function: MyDisplay_LedMPG
@@ -116,12 +116,13 @@ void setup()
    }
    DEBUG("EEPROM read ok");
    MyDisplay_init();
-   DEBUG("Display init ok");   
+   DEBUG("Display init done");   
    //Switch_init();
    DROInitCanvas();
    DROShowCanvas();
    MPG_init();
-   DEBUG("Init ok");   
+   DEBUG("Setup Init done");
+   grblDebug(2);
 } 
 
 bool tim50=false; 
@@ -144,7 +145,7 @@ void loop()
     }else if (mylooptime % 50 != 0)
         tim50 = true;
     DROProcessEvents();                     // processing from switches(key), MPG events and DRO events(than send CMD_STATUS_REPORT)
-    DROSet_EventDRO();                      // every 200ms set EVENT_DRO (=5Hz, see https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface), get Status Report
+    DROSet_EventDRO();                      // every 200ms set EVENT_DRO (=5Hz, see https://github.com/gnea/grbl/wiki/Grbl-v1.1-Interface), ask for Status Report if mpg mode
     grblPollSerial();                       // new messages from Uart-Port?
 
     if (Serial.available() > 0) {
@@ -157,11 +158,19 @@ void loop()
           grblDebug(10);                            // display 10 status messages 
           DROGetInfo();
           DROprintOut();                            // get is_loaded, lathe, mpg, grblHAL MPG & DRO 
+      }else if (!strncmp(buffer, "report", 6)) {
+          Serial.println(String(buffer));
+          serial_putC(CMD_STATUS_REPORT_ALL);
+      }else if (!strncmp(buffer, "reset", 6)) {
+          Serial.println(String(buffer));
+          serial_putC(24); 
+      }else if (!strncmp(buffer, "unlock", 6)) {
+          serial0_writeLn("$X");
       }else {
           Serial.println(String(buffer));
           DROprintOut();
           grblDebug(-1);
-          grblAwaitACK(buffer, 50);
+          grblAwaitACK(buffer, 50);         //timeout after 50ms
           grblDebug(0);
       }
     }

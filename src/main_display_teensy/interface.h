@@ -1,3 +1,5 @@
+#ifndef _INTERFACE_H_
+#define _INTERFACE_H_
 
 #include <stdint.h>
 //#include <stdbool.h>
@@ -41,4 +43,6 @@ unsigned long lcd_systicks(void);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
