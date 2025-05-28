@@ -212,8 +212,9 @@ grbl_options_t grblGetOptions (void);
 
 void setGrblLegacyMode (bool on);
 char mapRTC2Legacy (char c);
-#endif
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

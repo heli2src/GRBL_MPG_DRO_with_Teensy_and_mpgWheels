@@ -40,17 +40,19 @@ void Switch_mode(int mode){
 
 void Switch_loop(void){
     buttons.update();
-    if (switchmode ==0){  
+    if (switchmode ==0){                     // default value...
         if (buttons.fell(0))
             DROkeyEvent(true, 0);         // see dro.c
         if (buttons.fell(1))
             DROkeyEvent(true, 1);
-         if (buttons.fell(2))
+        if (buttons.fell(2))
             DROkeyEvent(true, 2);
-         if (buttons.fell(3))
+        if (buttons.fell(3))
             DROkeyEvent(true, 3);
-         if (buttons.fell(4))
+        if (buttons.fell(4))
             DROkeyEvent(true, 4);
+        if (buttons.rose(1))
+            DROkeyEvent(false, 1);
     }else {
         if (buttons.held(0))
             DROkeyEvent(true, 0);

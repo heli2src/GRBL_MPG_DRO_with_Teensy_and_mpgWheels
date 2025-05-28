@@ -2,7 +2,7 @@
 #define _MAIN_DISPLAY_TEENSY_H_
 
 
-#define VERSION "V0.18"
+#define VERSION "V0.19"
 //#define LATHEMODE
 
 //#define ILI9488

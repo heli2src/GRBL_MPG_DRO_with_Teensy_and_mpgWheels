@@ -36,7 +36,7 @@
 #include "myTouchCalibration.h"
 #include <FlickerFreePrint.h>     // library to draw w/o flicker        https://github.com/KrisKasprzak/FlickerFreePrint
 
-
+#include "dro.h"
 #include "error_alarmcodes.h"
 
 XPT2046_Calibrated Touch(TS_CS_PIN);    // , TS_IRQ_PIN);
@@ -215,6 +215,8 @@ void MyDisplay_LedMPG(bool on){
 }
 
 void MyDisplay_LedMPG_toggle(void){
+    DEBUG("  Toggle MPG_Mode");
+    serial_putC(CMD_MPG_MODE_TOGGLE);
     if (digitalRead(LED_MPG) == 1)
         digitalWrite(LED_MPG, LOW);
     else
@@ -390,6 +392,10 @@ void Dinit(void) {
    case Cend: {
         DEBUG("   Dinit: Cend");
         serial_putC(CMD_STATUS_REPORT_ALL);                     // get the first Report, to validate the display
+        delay(0.1);
+        serial_putC(24);                  //Reset send #24
+        delay(0.1);
+        sprintf(buffer10, "$X");          // unlock   
         mystate.state = Wmain;    
         break;}
    case Ckeys:{
@@ -432,7 +438,7 @@ void Dhome(void){
         sprintf(buffer10, "$H");
         serial0_writeLn(buffer10);
         serial_writeLn(buffer10);
-        sprintf(buffer10, "G92 X0 Z0");
+        // sprintf(buffer10, "G92 X0 Z0");         // set Display to 0
         serial0_writeLn(buffer10);
         serial_writeLn(buffer10); 
         if (mystate.lathe == 1) {
@@ -441,7 +447,8 @@ void Dhome(void){
           serial_writeLn(buffer10);
         }     
         mystate.execute = Cend; 
-        mystate.state = mystate.prevstate;             
+        // mystate.state = mystate.prevstate;   
+        mystate.state = Wmain;      
 }
 
 void Dreset(void){
@@ -538,10 +545,12 @@ void Dmain(void) {              // Aussendrehen
    case Ckeys:{
           char axis;
           float mystateaxis;
-          char ff[] = "G94";
-          if (mystate.DROkey < 10)
+          if (mystate.DROkey < 4)                // key from Display, only 0-3 allowed
               axis = 'a';
-          else
+          else if (mystate.DROkey < 10) {
+              MyDisplay_LedMPG_toggle();
+              return;
+          } else
               axis = mystate.DROkey / 10 + 'X' -1;
           DEBUG("   Dmain Ckeys", mystate.DROkey, axis); 
 
@@ -1115,10 +1124,12 @@ void processMpg (char MPGkey, int MPGcnt, int MPGdtime) {
 
 
 void processKeypress (int DROkey, int keydown, float rpm){
+    // kdeydown = EVENT_KEYDOWN/EVENT_KEYUP
+
     // call from dro.c->DROProcessEvents 
     //char *dbutton = (char*)"-1";
 
-    DEBUG("processKeypress DROkey=", DROkey, "State=", mystate.grblState, mystate.grblStateText, mystate.message);
+    DEBUG("processKeypress DROkey=", DROkey, "Value=", keydown, "State=", mystate.grblState, mystate.grblStateText, mystate.message);
     mystate.rpm = rpm;
     
     // evaluate key in the deticated page:
@@ -1130,27 +1141,25 @@ void processKeypress (int DROkey, int keydown, float rpm){
     DROkey = mystate.DROkey;
 
     // evaluate key for global function: 
-    switch (mystate.grblState){
-          case Run:       // == 2
-              DEBUG("  Run");   
-              if (DROkey == 0) {
-                  DEBUG("Stop");       
-                  serial_putC(CMD_STOP);
-              }
-              break;
-          case Idle:
-              if (DROkey == 4) {
-                  DEBUG("  Toggle MPG_Mode");
-                  MyDisplay_LedMPG_toggle();
-                  serial_putC(CMD_MPG_MODE_TOGGLE);
-              } 
-              break;
-          case Alarm:       // == 5
-              if (DROkey == 4) {
-                  DEBUG("  Toggle MPG_Mode");   
-                  MyDisplay_LedMPG_toggle();
-                  serial_putC(CMD_MPG_MODE_TOGGLE);
-              } 
-              break;
+    if (keydown == EVENT_KEYUP) {                    // 
+        switch (mystate.grblState){
+              case Run:       // == 2
+                  DEBUG("  Run");   
+                  if (DROkey == 0) {
+                      DEBUG("Stop");       
+                      serial_putC(CMD_STOP);
+                 }
+                 break;
+              case Idle:
+                  if (DROkey == 4) {
+                      MyDisplay_LedMPG_toggle();
+                  } 
+                  break;
+              case Alarm:       // == 5
+                  if (DROkey == 4) {
+                      MyDisplay_LedMPG_toggle();
+                  } 
+                  break;
+    }
     }
 }
