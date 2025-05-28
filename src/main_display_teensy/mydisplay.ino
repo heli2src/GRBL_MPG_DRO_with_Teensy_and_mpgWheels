@@ -96,7 +96,8 @@ struStates  dstate[WEND+1] = {   //assign numstate to the the calling function a
   {    WALARM,  Dalarm,   0},         // 5
   {     WHOME,   Dhome,   0},         // 6
   {    WRESET,  Dreset,   0},         // 7   
-  {  WDEFAULT, Ddefault,  0}          // 8
+  {  WDEFAULT, Ddefault,  0},         // 8
+  {   WMACRO1,  Dmacro1,  0}          // 9
  };
 
 typedef struct {
@@ -485,7 +486,7 @@ void Init_lathe(void){
        {115, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "B",  " 000.000",        WNUM}, // 3   Button Z:
 //           { 15, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 4
 //           { 15, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 5
-       { 290,                         20, TextColor, "Bk", " M",           WMENUE},  // 6  
+       { 280,                         20, TextColor, "Bk", " M",           WMENUE},  // 6
     };
     DEBUG("Init_lathe");
     showPage(sizeof(mytext)/sizeof(struPage), mytext);
@@ -507,7 +508,8 @@ void Init_milling(void){
        {180, COLUMN1+0*COLUM_DISTANCE+30, TextColor, "T2", "Feed rate:",        0}, 
  //      { 15, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 4
  //      { 15, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 5
-       { 290,                         20, TextColor, "Bk", " M",           WMENUE},  // 6
+       { 260,                         20, TextColor, "Bk", " M",            WMENUE},  // 6
+       { 305,                         20, TextColor, "Bk", "  >",          WMACRO1},  // 7
     }; 
     DEBUG("Init_milling");
     showPage(sizeof(mytext)/sizeof(struPage), mytext);
@@ -685,6 +687,70 @@ void Dmain(void) {              // Aussendrehen
           }
         break;}
    }
+}
+
+struMillobject pocket_milling;
+void Dmacro1(void) {
+  switch (mystate.execute) {
+    case Cinit: {
+        DEBUG("Dmacro1: Cinit"); 
+           struPage mytext[]= {
+            { 10,                           7, TextColor, "T0", "Pocket Milling",    0}, // 0
+            {220, COLUMN1+0*COLUM_DISTANCE-20, TextColor, "T2", "actual",            0}, //
+            {170, COLUMN1+0*COLUM_DISTANCE,    TextColor, "T0", "X:",                0}, //                
+            {170, COLUMN1+1*COLUM_DISTANCE,    TextColor, "T0", "Y:",                0}, // 
+            {170, COLUMN1+2*COLUM_DISTANCE,    TextColor, "T0", "Z:",                0}, // 
+            { 10, COLUMN1+0*35,                TextColor, "Bk", "X",              WNUM}, //                 
+            { 10, COLUMN1+1*35,                TextColor, "Bk", "Y",              WNUM}, // 
+            { 10, COLUMN1+2*35,                TextColor, "Bk", "Z",              WNUM}, //
+            { 15, COLUMN1+3*35,                TextColor, "B", "Cutter ",         WNUM}, //
+            {180, COLUMN1+0*COLUM_DISTANCE+30, TextColor, "T2", "Feed rate:",        0},  
+            {305,                         20, TextColor, "Bk", "  >",            Wmain},  // 
+        };
+        // TODO missing:
+        //   input X, Y
+        //   Tiefe Z
+        //   Fräsdurchmesser
+        //   innen oder aussen
+        //   wenn Innen: Ecken ausräumen?
+        //   seitliche Zustellung
+        //   Z Zustellung
+        //    Gegenlauf, Gleichlauf
+        //   Aufmass Schruppen
+        pocket_milling.x = 20.0;
+        pocket_milling.y = 20.0;
+        pocket_milling.z = 1.0;
+        pocket_milling.update = true;
+
+        showPage(sizeof(mytext)/sizeof(struPage), mytext);
+        Display.setTextColor(TextColor);
+        target.changed = true; 
+        Display.setFont(F_A10);   //10
+        Display.setCursor(270 , COLUMN1+0*COLUM_DISTANCE+30);
+        Display.print(target.fxmin);
+
+        Display.setFont(F_A14);   //14
+        Display.setCursor(30 , COLUMN1+0*35-5);
+        Display.print(pocket_milling.x);
+        Display.setCursor(30 , COLUMN1+1*35-5);
+        Display.print(pocket_milling.y);
+        Display.setCursor(30 , COLUMN1+2*35-5);
+        Display.print(pocket_milling.z);
+
+        break;}
+    case Crun: { 
+        // DEBUG("   Dmacro1 Crun", "grblstate=", mystate.grblState);
+        if (pocket_milling.update){
+            pocket_milling.update = false;
+        }
+        break;}
+    case Cend: {
+        break;}
+    case Ckeys:{
+        DEBUG("   Dmain Ckeys", mystate.DROkey, mystate.DROkeyvalue);
+        pocket_milling.update = true;
+        break;}
+  }
 }
 
 void Dalarm(void) {              // Widget for alarm + error messages
@@ -1111,7 +1177,7 @@ void MyDisplay_loop(void){
 }
 
 void drawString (uint_fast8_t i, const ILI9341_t3_font_t *font, uint16_t x, uint16_t y, float value, const char *string, bool opaque){
-    if (mystate.state == Wmain) {
+    if ((mystate.state == Wmain) | (mystate.state == WMACRO1)) {
         //DEBUG("drawString", i, x, y, value, string);
         Display.setFont(*font); 
         Display.setFont(Arial_24);

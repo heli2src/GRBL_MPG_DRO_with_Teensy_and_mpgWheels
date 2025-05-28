@@ -86,6 +86,20 @@ typedef struct {
   bool changed;
 } struTarget;
 
+typedef struct {
+   float x;
+   float y;
+   float z;
+   float fd;       //   Fräsdurchmesser
+   bool  inside;   //   innen oder aussen
+   bool  edge;     //   wenn Innen: Ecken ausräumen?
+   float sz;       //   seitliche Zustellung
+   float tz;       //   tiefen Zustellung
+   bool cr;        //   counter rotatio ( Gegenlauf, Gleichlauf
+   float offset;   //   Aufmass Schruppen
+   bool update;
+} struMillobject;
+
 typedef enum {
     WSTART   =  0,          // Wellcome Page
     Wmain  =  1,            // Drehen Page 
@@ -96,7 +110,8 @@ typedef enum {
     WHOME = 6,              // go to position 
     WRESET = 7,             // send reset & unlock
     WDEFAULT = 8,           // set default values
-    WEND = 9
+    WMACRO1 = 9,            // Macro 1
+    WEND = 10
 } EnumWidgetState;
 
 typedef enum {
