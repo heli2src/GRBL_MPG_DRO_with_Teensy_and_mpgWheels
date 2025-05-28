@@ -2,7 +2,11 @@
 # GRBL_MPG_DRO_with_Teensy_and_MPG_Wheels
 
 Control of the grpHall with a small touch display (ILI9341 320x240) and mpg-wheels connected via RS485.
-
+\
+The main aim was to be able to continue using both the lathe and the milling machine 'manually'. Manual only means that they should work as before. In other words, to move a rotary wheel around an axis. 
+Especially when turning, you often just want to machine a part quickly, which is often faster conventionally than laboriously writing and testing the first G-code.
+But if you equip your machine with stepper motors or servomotors, then of course it should also be possible to process G-code. That's why pure cycle electronics were out of the question for me.
+\
 This Project is starting from [GRBL_MPG_DRO_BoosterPack](https://github.com/terjeio/GRBL_MPG_DRO_BoosterPack).
 But is use a [Teensy 3.2](https://www.pjrc.com/store/teensy32.html) for controlling. The big difference 
 is that you can not only use 2 MPG wheels, but several, which can also be distributed on the machine.
@@ -21,17 +25,11 @@ There is still some tidying up to be done, but certain extensions are even more 
 The Source code not ready yet, there could be bugs, use it carfully!
 \
 \
-Features:
+Features from the current version:
 - Control board with a SPI LCD and touch interface (ILI9341 320x240), connect via Uart with the [grbHAL driver](https://github.com/grblHAL).
 - each MPG wheels has its own [Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) connected via rs485 with the control board.
   Own control switches and a small display is possible (SSD1306 or SH1106 (128x64) via I2C).
 - Switching from pure DRO for external CNC code and manual operation with the handwheels, and simple cycles such as turning cones or any thread.
-\
-\
-Here I have converted my lathe, a Quantum D240x400E.
-With the wheels you can also use the machine conventionally. In some cases, you can also drive certain cycles very easily. However, this has only been implemented in a rudimentary way so far.
-\
-Features from the current version:
 - DRO/MPG display actual and target values.
 - Support 3D milling machine X,Y,Z Feed Rate with mm/min, or lathe X,Z Feedrate mm/min when the machine is stopped, and mm/U when the machine is turning.
 - More axis travel via the screen.
