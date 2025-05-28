@@ -136,6 +136,8 @@ typedef struct {
     int grblState = 0;   // = dro.c/grbl.state : "Unknown", "Idle", "Run", "Jog", "Hold", "Alarm", "Check", "Door", "Tool", "Home", "Sleep"
     int substate;
     int DROkey = -1;
+    int DROkeyvalue = -1;
+    unsigned long DROtime = 0;
     float x = 0.0;
     float y = 0.0;
     float z = 0.0;
@@ -348,7 +350,7 @@ void showMessage(void){         // display a status and Button Line in the lower
         mystate.change_grblState = false;
         //DEBUG("            not buttons active");
         if (mystate.grblState == Idle) {
-            showMessageButtons("Start", "", "", "drive0");
+            showMessageButtons("Start", "", "", "d0/S0");
         }else if (mystate.grblState == Run){
             mystate.alarm = 0;
             showMessageButtons("Stop", "", "", "");
@@ -430,25 +432,31 @@ void Dmenue(void){
 }
 
 void Dhome(void){
-        DEBUG("   Dhome: Cinit");
-        serial_putC(24); 
-        sprintf(buffer10, "$X ");                 // unlock
-        serial0_writeLn(buffer10);
-        serial_writeLn(buffer10);
-        sprintf(buffer10, "$H");
-        serial0_writeLn(buffer10);
-        serial_writeLn(buffer10);
-        // sprintf(buffer10, "G92 X0 Z0");         // set Display to 0
-        serial0_writeLn(buffer10);
-        serial_writeLn(buffer10); 
-        if (mystate.lathe == 1) {
-          sprintf(buffer10, "G7");                  // enable Diameter
-          serial0_writeLn(buffer10);
-          serial_writeLn(buffer10);
-        }     
-        mystate.execute = Cend; 
-        // mystate.state = mystate.prevstate;   
-        mystate.state = Wmain;      
+    switch (mystate.execute) {
+        case Cinit: {
+            DEBUG("   Dhome: Cinit");
+            serial_putC(24); 
+            sprintf(buffer10, "$X ");                 // unlock
+            serial0_writeLn(buffer10);
+            serial_writeLn(buffer10);
+            sprintf(buffer10, "$H");
+            serial0_writeLn(buffer10);
+            serial_writeLn(buffer10);
+            // sprintf(buffer10, "G92 X0 Z0");         // set Display to 0
+            //serial0_writeLn(buffer10);
+            //serial_writeLn(buffer10); 
+            if (mystate.lathe == 1) {
+                sprintf(buffer10, "G7");                  // enable Diameter
+                serial0_writeLn(buffer10);
+                serial_writeLn(buffer10);
+            }     
+            mystate.execute = Cend; 
+            // mystate.state = mystate.prevstate;
+            mystate.prevstate = Wmain;
+            mystate.state = Wmain;
+            }
+        default: break;
+    }
 }
 
 void Dreset(void){
@@ -496,6 +504,7 @@ void Init_milling(void){
        {115, COLUMN1+0*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 1   Button X:
        {115, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 2   Button Y:
        {115, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "B",  "  00.000",        WNUM}, // 3   Button Z:
+       {180, COLUMN1+0*COLUM_DISTANCE+30, TextColor, "T2", "Feed rate:",        0}, 
  //      { 15, COLUMN1+1*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 4
  //      { 15, COLUMN1+2*COLUM_DISTANCE+12, TextColor, "Bk", "  0",         WAOFFSET}, // 5
        { 290,                         20, TextColor, "Bk", " M",           WMENUE},  // 6
@@ -504,6 +513,11 @@ void Init_milling(void){
     showPage(sizeof(mytext)/sizeof(struPage), mytext);
     Display.setTextColor(TextColor);
     target.changed = true; 
+
+    Display.setFont(F_A10);   //10
+    //Display.setTextColor(ddisplay[index].TextColor);
+    Display.setCursor(270 , COLUMN1+0*COLUM_DISTANCE+30);
+    Display.print(target.fxmin);
 }
 
 void Dmain(void) {              // Aussendrehen
@@ -528,10 +542,11 @@ void Dmain(void) {              // Aussendrehen
                 sprintf(buffer10, "%.3f", target.x);
                 Buttons[0].setText(buffer10);
                 sprintf(buffer10, "%.3f", target.y);
-                Buttons[1].setText(buffer10);      
+                Buttons[1].setText(buffer10);
+                printf(buffer10, "%.3f", target.fxmin);
             }
             sprintf(buffer10, "%.3f", target.z);
-            Buttons[2].setText(buffer10); 
+            Buttons[2].setText(buffer10);
             target.changed = false;
             Buttons[0].show();
             Buttons[1].show();
@@ -545,24 +560,56 @@ void Dmain(void) {              // Aussendrehen
    case Ckeys:{
           char axis;
           float mystateaxis;
-          if (mystate.DROkey < 4)                // key from Display, only 0-3 allowed
+          if (mystate.DROkey < 4)                // key from Display, only 0-3 allowed for driving....
               axis = 'a';
           else if (mystate.DROkey < 10) {
               MyDisplay_LedMPG_toggle();
               return;
           } else
               axis = mystate.DROkey / 10 + 'X' -1;
-          DEBUG("   Dmain Ckeys", mystate.DROkey, axis); 
+          DEBUG("   Dmain Ckeys", mystate.DROkey, mystate.DROkeyvalue, axis); 
 
           if (mystate.grblState == Idle) {        // = 1
               float targetfmin, targetf, targetaxis;
               switch (axis) {
                   case 'a': {
-                            if (mystate.DROkey == 0) {
+                            command[0] = 0;
+                            if (mystate.DROkey == 0) {                          // start XYZ
                                 sprintf(command, "G94F%.3fG90G01X%.3fY%.3fZ%.3f", target.fxmin, target.x, target.y, target.z);      // mm/min
-                            }else if (mystate.DROkey == 3) {
-                                sprintf(command, "G00X0Y0Z0");
+                            }else if (mystate.DROkey == 3) {                    // drive to 0 / set to 0
+                            DEBUG("BUttontime:", millis()-mystate.DROtime);
+                                if (mystate.DROkeyvalue == EVENT_KEYDOWN)              // /EVENT_KEYUP//EVENT_KEYDOWN
+                                    mystate.DROtime = millis();
+                                else if (mystate.DROkeyvalue == EVENT_KEYUP) {
+                                    unsigned long DROtime = millis()-mystate.DROtime;
+                                    if (DROtime < 500) {
+                                        sprintf(command, "G00X0Y0Z0");                 // drive to 0
+                                        if (mystate.lathe == 0) {
+                                            sprintf(buffer10, "%.3f", mystate.x);
+                                            Buttons[0].setText(buffer10);
+                                            Buttons[0].show();
+                                            sprintf(buffer10, "%.3f", mystate.y);
+                                            Buttons[1].setText(buffer10);
+                                            Buttons[1].show();
+                                            sprintf(buffer10, "%.3f", mystate.z);
+                                            Buttons[2].setText(buffer10);
+                                            Buttons[2].show();
+                                        }else{
+                                            sprintf(buffer10, "%.3f", mystate.x);
+                                            Buttons[1].setText(buffer10);
+                                            Buttons[1].show();
+                                            sprintf(buffer10, "%.3f", mystate.z);
+                                            Buttons[2].setText(buffer10);
+                                            Buttons[2].show();
+                                        }
+                                    }else if (DROtime < 800)
+                                        DEBUG("do nothing, time not defined!!");
+                                    else if (DROtime < 2000)                           // set to 0
+                                        sprintf(command, "G92X0Y0Z0");
+                                }
                             }
+                            if (command[0] == 0)
+                                return;
                             break;}
                   case 'X': {targetfmin = target.fxmin;
                             targetf = target.fx;
@@ -626,7 +673,12 @@ void Dmain(void) {              // Aussendrehen
               DEBUG(command);
               serial_writeLn(command);
           }else if (mystate.grblState == Run) { 
-              if (mystate.DROkey % 10  == 1){
+              if (axis=='a') {
+                  if (mystate.DROkey == 0) {
+                      DEBUG("Stop");       
+                      serial_putC(CMD_STOP);
+                  }
+              }else if (mystate.DROkey % 10  == 1){
                   DEBUG("Stop");       
                   serial_putC(CMD_STOP);
               }                   
@@ -915,6 +967,17 @@ void Ddefault(void) {              // set default values
         break;}
   case Cend: {
         DEBUG("   Ddefault: Cend", mystate.bindex, input.fvalue);
+        switch (mystate.bindex) {
+           case 0 : { target.fzmin = input.fvalue;
+                    break;}
+           case 1 : { target.fz = input.fvalue;
+                    break;}
+           case 2 : { target.fxmin = input.fvalue;
+                    break;} 
+           case 3 : { target.fx = input.fvalue;
+                    break;}
+           default: break;
+        }
         DEBUG("      fz:", target.fzmin, target.fz);
         DEBUG("      fx:", target.fxmin, target.fx);
         eeprom.fzmin = target.fzmin; eeprom.fzU = target.fz;
@@ -1134,12 +1197,14 @@ void processKeypress (int DROkey, int keydown, float rpm){
     
     // evaluate key in the deticated page:
     mystate.DROkey = DROkey;
+    mystate.DROkeyvalue = keydown;
+
     call_enum_t execute_state = mystate.execute; 
     mystate.execute = Ckeys;
     dstate[mystate.state].function();
     mystate.execute = execute_state;
-    DROkey = mystate.DROkey;
 
+    DROkey = mystate.DROkey;
     // evaluate key for global function: 
     if (keydown == EVENT_KEYUP) {                    // 
         switch (mystate.grblState){

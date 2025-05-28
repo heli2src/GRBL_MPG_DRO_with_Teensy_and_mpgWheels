@@ -109,7 +109,7 @@ static void MPG_ResetPosition (bool await)
 }
 
 
-static void displayPosition (uint_fast8_t i){
+static void dro_displayPosition (uint_fast8_t i){
     if(axis[i].visible) {
         ///CJ setColor(axis[i].dro_lock ? Yellow : White);
         drawString(i, &POSFONT, POSCOL, axis[i].row, grbl_data->position[i] - grbl_data->offset[i], ftoa(grbl_data->position[i] - grbl_data->offset[i], "% 5.3f"), true);
@@ -205,17 +205,13 @@ static void displayGrblData (char *line)
         }
 
         if (!mpgMove) {
-
             if(grbl_data->changed.xpos)
-                displayPosition(X_AXIS);
-
+                dro_displayPosition(X_AXIS);
             if(grbl_data->changed.ypos)
-                displayPosition(Y_AXIS);
-
+                dro_displayPosition(Y_AXIS);
             if(grbl_data->changed.zpos) {
-                displayPosition(Z_AXIS);
+                dro_displayPosition(Z_AXIS);
             }
-
             endMove = false;
         }
 
@@ -235,7 +231,7 @@ static void displayGrblData (char *line)
                 do {
                     if(axis[--c].dro_lock) {
                         axis[c].dro_lock = false;
-                        displayPosition(c);
+                        dro_displayPosition(c);
                     }
 //CJ                    setMPGFactorBG(c, Black);
                 } while(c);                
@@ -412,8 +408,8 @@ void DROkeyEvent (bool keyDown, char key)
         event |= EVENT_KEYUP;
     DROkey = key;
     keyreleased = !keyDown;
-    sprintf(buffer, "DROkeyEvent: keyDown=%d, key=%d ", keyDown, key);
-    serial0_writeLn(buffer);
+    //sprintf(buffer, "DROkeyEvent: keyDown=%d, key=%d ", keyDown, key);
+    //serial0_writeLn(buffer);
 }
 
 void DROJoystickEvent (bool change, int key)

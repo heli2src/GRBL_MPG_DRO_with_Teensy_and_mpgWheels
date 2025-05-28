@@ -53,6 +53,10 @@ void Switch_loop(void){
             DROkeyEvent(true, 4);
         if (buttons.rose(1))
             DROkeyEvent(false, 1);
+        if (buttons.rose(2))
+            DROkeyEvent(false, 2);
+        if (buttons.rose(3))
+            DROkeyEvent(false, 3);
     }else {
         if (buttons.held(0))
             DROkeyEvent(true, 0);
