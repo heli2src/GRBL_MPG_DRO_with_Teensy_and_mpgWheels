@@ -18,18 +18,32 @@ The display can be used as a pure display when processing CNC code (sent via ioS
 \
 \
 There is still some tidying up to be done, but certain extensions are even more important at the moment for proper working.
-The Source code not ready yet, there are some bugs, use it carfully!
+The Source code not ready yet, there could be bugs, use it carfully!
 \
 \
 Features:
 - Control board with a SPI LCD and touch interface (ILI9341 320x240), connect via Uart with the [grbHAL driver](https://github.com/grblHAL).
-- each MPG wheels has its own Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) connected via rs485 with the control board.
-  Own control switches and a small display is possible (SSD1306 via I2C).
+- each MPG wheels has its own [Pi Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) connected via rs485 with the control board.
+  Own control switches and a small display is possible (SSD1306 or SH1106 (128x64) via I2C).
 - Switching from pure DRO for external CNC code and manual operation with the handwheels, and simple cycles such as turning cones or any thread.
 \
 \
 Here I have converted my lathe, a Quantum D240x400E.
 With the wheels you can also use the machine conventionally. In some cases, you can also drive certain cycles very easily. However, this has only been implemented in a rudimentary way so far.
+
+Features from the current version:
+- DRO/MPG display actual and target values.
+- Support 3D milling machine X,Y,Z Feed Rate with mm/min, or lathe X,Z Feedrate mm/min when the machine is stopped, and mm/U when the machine is turning.
+- More axis travel via the screen.
+- MPG-Wheel features:
+  - Setting for the wheel wheel and the buttons set, axis, rotate screen/bars.
+  - Move 1-axis with the rotary wheel.
+  - Setting the resolution of the wheel via button for each axis, 0.01/0.1/1 mm.
+  - Set display value to 0 for each axis.
+  - Use the button to quickly return to 0.
+  - Drive to the target point at the set feed rate using a button.
+  - Drive to a target point with the rotary wheel, then quickly return with the pushbutton and drive back to the last target point at the set feed rate --> Simple cycling with manual adjustment of another axis.
+- DRO set to 0 for 
 
 <img src="docs/images/lathe_1.jpg"></img>
 \
@@ -39,7 +53,7 @@ With the wheels you can also use the machine conventionally. In some cases, you 
 
 ### - Teensy for the touch display
 
-you have to use the arduino version 1.8.19. With the latest compiler 2.x, you get compiler errors.
+With the Arduino version 2.3.6 you should be able to compile without errors.
 
 Following libs are used:
 
@@ -63,6 +77,5 @@ Following libs are used:
 
 - The rotational speed of the wheels is not yet properly evaluated. As a result, the whole thing still runs a little rough.
 - Simultaneous driving of 2-axes over the wheels does not yet work in practice.
-- More axis travel via the screen is not yet possible, but in work....
 - The entire software is still under construction, which is why there is no release yet.
   
