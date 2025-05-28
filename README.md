@@ -30,11 +30,13 @@ Features:
 \
 Here I have converted my lathe, a Quantum D240x400E.
 With the wheels you can also use the machine conventionally. In some cases, you can also drive certain cycles very easily. However, this has only been implemented in a rudimentary way so far.
-
+\
 Features from the current version:
 - DRO/MPG display actual and target values.
 - Support 3D milling machine X,Y,Z Feed Rate with mm/min, or lathe X,Z Feedrate mm/min when the machine is stopped, and mm/U when the machine is turning.
 - More axis travel via the screen.
+- Home driving
+- reset/unlock Aarms
 - MPG-Wheel features:
   - Setting for the wheel wheel and the buttons set, axis, rotate screen/bars.
   - Move 1-axis with the rotary wheel.
@@ -44,7 +46,24 @@ Features from the current version:
   - Drive to the target point at the set feed rate using a button.
   - Drive to a target point with the rotary wheel, then quickly return with the pushbutton and drive back to the last target point at the set feed rate --> Simple cycling with manual adjustment of another axis.
 - DRO set to 0 for 
-
+\
+# planned
+- lathe : 
+  - thread cutting
+  - Turn cone
+  - Run cycles
+- Milling: 
+  - mill surface flat
+  - Milling pools
+\
+### Todo
+- The rotational speed of the wheels is not yet properly evaluated. As a result, the whole thing still runs a little rough.
+- Simultaneous driving of 2-axes over the wheels does not yet work in practice.
+- The entire software is still under construction, which is why there is no release yet.
+\
+\
+Here I have converted my lathe, a Quantum D240x400E.
+With the wheels you can also use the machine conventionally. In some cases, you can also drive certain cycles very easily. However, this has only been implemented in a rudimentary way so far.
 <img src="docs/images/lathe_1.jpg"></img>
 \
 \
@@ -73,9 +92,4 @@ Following libs are used:
 - or you can use https://docs.micropython.org/en/latest/reference/mpremote.html 
 - rename 'display_cnc_achse.py' to 'main.py' on the raspi pico
 
-### Todo
-
-- The rotational speed of the wheels is not yet properly evaluated. As a result, the whole thing still runs a little rough.
-- Simultaneous driving of 2-axes over the wheels does not yet work in practice.
-- The entire software is still under construction, which is why there is no release yet.
   
